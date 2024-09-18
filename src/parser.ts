@@ -104,7 +104,8 @@ export class Parser {
         uri: string,
         method: string,
     ) {
-        const operationId = operation.operationId!!.split('_').slice(1).join('_');
+        // const operationId = operation.operationId!!.split('_').slice(1).join('_');
+        const operationId = operation.operationId
         const name = lodash.startCase(operationId);
         const description = operation.description || operation.summary || '';
         const option = {
@@ -273,6 +274,7 @@ export class Parser {
                 defaultValue = defaultValue !== undefined ? JSON.stringify(defaultValue, null, 2) : '[]';
                 break;
             case 'number':
+            case 'integer':
                 type = 'number';
                 defaultValue = defaultValue !== undefined ? defaultValue : 0;
                 break;
@@ -318,7 +320,12 @@ export class Parser {
         if (!requestBody) {
             return [];
         }
-        const requestBodySchema = requestBody.content['application/json'].schema;
+        const content = requestBody.content['application/json'] || requestBody.content['application/json; charset=utf-8'];
+        if (!content) {
+            // TODO: Add logs
+            return []
+        }
+        const requestBodySchema = content.schema;
         const requestSchema = this.resolveSchema(requestBodySchema);
         if (requestSchema.type != 'object') {
             throw new Error(`Type '${requestSchema.type}' not supported`);
