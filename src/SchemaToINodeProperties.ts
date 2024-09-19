@@ -17,6 +17,15 @@ function combineINodeProperties(...sources: Partial<INodeProperties>[]): INodePr
 }
 
 /**
+ * in obj find key starts with regexp
+ * Return first match VALUE of the key
+ */
+function findKey(obj: any, regexp: RegExp): any | undefined {
+    const key = Object.keys(obj).find((key) => regexp.test(key))
+    return key ? obj[key] : undefined
+}
+
+/**
  * One level deep - meaning only top fields of the schema
  * The rest represent as JSON string
  */
@@ -137,9 +146,10 @@ export class N8NINodeProperties {
             return [];
         }
         body = this.refResolver.resolve<OpenAPIV3.RequestBodyObject>(body)
-        const content = body.content['application/json'] || body.content['application/json; charset=utf-8'];
+        const regexp = /application\/json.*/
+        const content = findKey(body.content, regexp)
         if (!content) {
-            throw new Error(`No 'application/json' content found`);
+            throw new Error(`No '${regexp}' content found`);
         }
         const requestBodySchema = content.schema!!;
         const schema = this.refResolver.resolve<OpenAPIV3.SchemaObject>(requestBodySchema)

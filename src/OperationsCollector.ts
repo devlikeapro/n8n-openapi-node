@@ -31,6 +31,7 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
 
     // Dependency injection light version
     protected operationParser: IOperationParser = new N8NOperationParser()
+    private bindings: any
 
     constructor(logger: pino.Logger, doc: any) {
         this.logger = logger.child({})
@@ -75,11 +76,12 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
                 operationId: operation.operationId
             }
         }
+        this.bindings = bindings
         try {
             this._visitOperation(operation, context)
         } catch (error) {
             // @ts-ignore
-            this.logger.error(bindings as any, error?.message)
+            this.logger.warn(bindings as any, error?.message)
         }
     }
 
@@ -94,7 +96,45 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
         this.addDisplayOption(fields, resourceName, operationName)
         this.optionsByResource.add(resourceName, option);
         this._fields.push(...fields)
+    }
 
+    parseFields(operation: OpenAPIV3.OperationObject, context: OperationContext) {
+        const fields = [];
+        const parameterFields = this.n8nNodeProperties.fromParameters(operation.parameters)
+        fields.push(...parameterFields);
+
+        try {
+            const bodyFields = this.n8nNodeProperties.fromRequestBody(operation.requestBody)
+            fields.push(...bodyFields);
+        } catch (error) {
+            // @ts-ignore
+            this.logger.warn(this.bindings, error?.message)
+            const msg = "There's no body available for request, kindly use HTTP Request node to send body"
+            const notice: INodeProperties = {
+                displayName: `${context.method.toUpperCase()} ${context.pattern}<br/><br/>${msg}`,
+                name: 'operation',
+                type: 'notice',
+                default: '',
+            }
+            fields.push(notice)
+        }
+
+        // sort fields, so "session" always top
+        fields.sort(sessionFirst);
+
+        return fields;
+    }
+
+    addDisplayOption(fields: INodeProperties[], resource: string, operation: string) {
+        const displayOptions = {
+            show: {
+                resource: [resource],
+                operation: [operation],
+            },
+        }
+        fields.forEach((field) => {
+            field.displayOptions = displayOptions
+        })
     }
 
     protected parseOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
@@ -115,36 +155,13 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
                 },
             },
         };
-        const fields = this.parseFields(operation);
+        const fields = this.parseFields(operation, context);
 
 
         return {
             option: option,
             fields: fields,
         };
-    }
-
-    addDisplayOption(fields: INodeProperties[], resource: string, operation: string) {
-        const displayOptions = {
-            show: {
-                resource: [resource],
-                operation: [operation],
-            },
-        }
-        fields.forEach((field) => {
-            field.displayOptions = displayOptions
-        })
-    }
-
-    parseFields(operation: OpenAPIV3.OperationObject) {
-        const fields = [];
-        const parameterFields = this.n8nNodeProperties.fromParameters(operation.parameters)
-        fields.push(...parameterFields);
-        const bodyFields = this.n8nNodeProperties.fromRequestBody(operation.requestBody)
-        fields.push(...bodyFields);
-        // sort fields, so "session" always top
-        fields.sort(sessionFirst);
-        return fields;
     }
 }
 
