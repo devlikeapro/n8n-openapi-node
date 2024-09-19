@@ -23,7 +23,11 @@ export class RefResolver {
 
     resolve(schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject): OpenAPIV3.SchemaObject {
         if ('$ref' in schema) {
-            return this.resolveRef(schema['$ref']);
+            const schemaResolved = this.resolveRef(schema['$ref']);
+            // Remove $ref from schema, add all other properties
+            const {$ref, ...rest} = schema;
+            Object.assign(rest, schemaResolved);
+            return rest;
         }
         return schema
     }
