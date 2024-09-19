@@ -1,6 +1,7 @@
 import {INodeProperties, NodePropertyTypes} from 'n8n-workflow/dist/Interfaces';
 import * as lodash from 'lodash';
 import {OpenAPIV3} from 'openapi-types';
+import {RefResolver} from "./RefResolver";
 
 interface Action {
     uri: string;
@@ -42,6 +43,7 @@ export class Parser {
 
     private operationByResource: Map<string, any[]> = new Map();
     private readonly doc: OpenAPIV3.Document;
+    private refResolver: RefResolver;
 
     constructor(
         doc: any,
@@ -52,6 +54,7 @@ export class Parser {
         this.doc = doc
         this.operations = [];
         this.fields = [];
+        this.refResolver = new RefResolver(doc)
     }
 
     get properties(): INodeProperties[] {
@@ -378,19 +381,7 @@ export class Parser {
     }
 
     private resolveRef(ref: string): OpenAPIV3.SchemaObject {
-        const refPath = ref.split('/').slice(1);
-        let schema: any = this.doc;
-        for (const path of refPath) {
-            // @ts-ignore
-            schema = schema[path];
-        }
-        if (!schema) {
-            throw new Error(`Schema not found for ref ${ref}`);
-        }
-        if ('$ref' in schema) {
-            return this.resolveRef(schema['$ref']);
-        }
-        return schema;
+        return this.refResolver.resolve(ref)
     }
 
     private parseOperations() {
