@@ -3,7 +3,7 @@ import {OpenAPIV3} from 'openapi-types';
 import pino from 'pino';
 import {OpenAPIWalker} from "./openapi/OpenAPIWalker";
 import {ResourcePropertiesCollector} from "./ResourcePropertiesCollector";
-import {OperationsCollector} from "./OperationsCollector";
+import {BaseOperationsCollector} from "./OperationsCollector";
 
 
 export interface ParserConfig {
@@ -12,7 +12,6 @@ export interface ParserConfig {
 }
 
 export class Parser {
-    public resourceNode?: INodeProperties;
     public operations: INodeProperties[];
     public fields: INodeProperties[];
 
@@ -39,7 +38,7 @@ export class Parser {
         this.walker.walk(resourcePropertiesCollector)
         const resourceNode = resourcePropertiesCollector.iNodeProperty
 
-        const operationsCollector = new OperationsCollector(this.logger, this.doc, this.addUriAfterOperation)
+        const operationsCollector = new BaseOperationsCollector(this.logger, this.doc, this.addUriAfterOperation)
         this.walker.walk(operationsCollector)
         const operations = operationsCollector.operations
         const fields = operationsCollector.fields

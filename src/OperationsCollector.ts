@@ -2,9 +2,9 @@ import {OpenAPIVisitor, OperationContext} from "./openapi/OpenAPIVisitor";
 import pino from "pino";
 import {OpenAPIV3} from "openapi-types";
 import {INodeProperties} from "n8n-workflow/dist/Interfaces";
-import * as lodash from "lodash";
 import {N8NINodeProperties} from "./SchemaToINodeProperties";
 import {IOperationParser, N8NOperationParser} from "./OperationParser";
+import {OptionsByResourceMap} from "./n8n/OptionsByResourceMap";
 
 /**
  * /api/entities/{entity} => /api/entities/{{$parameter["entity"]}}
@@ -23,11 +23,10 @@ function sessionFirst(a: any, b: any) {
     return 0;
 }
 
-export class OperationsCollector implements OpenAPIVisitor {
+export class BaseOperationsCollector implements OpenAPIVisitor {
     public readonly _fields: INodeProperties[]
-    private operationByResource: Map<string, any[]> = new Map();
+    private optionsByResource: OptionsByResourceMap = new OptionsByResourceMap()
     private readonly logger: pino.Logger;
-    private readonly _operations: INodeProperties[];
     private n8nNodeProperties: N8NINodeProperties;
 
     // Dependency injection light version
@@ -36,15 +35,32 @@ export class OperationsCollector implements OpenAPIVisitor {
     constructor(logger: pino.Logger, doc: any, private addUriAfterOperation: boolean) {
         this.logger = logger.child({class: 'OperationsCollector'});
         this._fields = []
-        this._operations = []
         this.n8nNodeProperties = new N8NINodeProperties(this.logger, doc)
     }
 
-    get operations() {
-        if (this._operations.length === 0) {
+    get operations(): INodeProperties[] {
+        if (this.optionsByResource.size === 0) {
             throw new Error('No operations found in OpenAPI document')
         }
-        return [...this._operations]
+
+        const operations = []
+        for (const [resource, options] of this.optionsByResource) {
+            const operation: INodeProperties = {
+                displayName: 'Operation',
+                name: 'operation',
+                type: 'options',
+                noDataExpression: true,
+                displayOptions: {
+                    show: {
+                        resource: [resource],
+                    },
+                },
+                options: options,
+                default: '',
+            };
+            operations.push(operation);
+        }
+        return operations
     }
 
     get fields() {
@@ -62,18 +78,18 @@ export class OperationsCollector implements OpenAPIVisitor {
         }
         const {option, fields} = this.parseOperation(operation, context);
         const resourceName = this.operationParser.getResourceName(operation, context);
-        this.addOption(resourceName, option);
-        this.addFields(fields);
+        const operationName = option.name;
+        this.addDisplayOption(fields, resourceName, operationName)
+        this.optionsByResource.add(resourceName, option);
+        this._fields.push(...fields)
     }
 
     parseOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
         const method = context.method
         const uri = context.pattern;
-        const resourceName = this.operationParser.getResourceName(operation, context);
         const operationName = this.operationParser.getOperationName(operation, context);
         const optionAction = this.operationParser.getOptionAction(operation, context);
         const description = this.operationParser.getOptionDescription(operation, context)
-
         const option = {
             name: operationName,
             value: operationName,
@@ -102,7 +118,6 @@ export class OperationsCollector implements OpenAPIVisitor {
             fields.unshift(notice);
         }
 
-        this.addDisplayOption(fields, resourceName, operationName)
         return {
             option: option,
             fields: fields,
@@ -131,44 +146,7 @@ export class OperationsCollector implements OpenAPIVisitor {
         fields.sort(sessionFirst);
         return fields;
     }
+}
 
-    finish() {
-        for (const [resource, options] of this.operationByResource) {
-            const operation = {
-                displayName: 'Operation',
-                name: 'operation',
-                type: 'options',
-                noDataExpression: true,
-                displayOptions: {
-                    show: {
-                        resource: [resource],
-                    },
-                },
-                options: options,
-                default: '',
-            };
-            // @ts-ignore
-            this.addOperation(operation);
-        }
-    }
-
-    private addOption(resourceName: string, option: any) {
-        if (!this.operationByResource.has(resourceName)) {
-            this.operationByResource.set(resourceName, []);
-        }
-        const options = this.operationByResource.get(resourceName)!!;
-        if (lodash.find(options, {value: option.value})) {
-            throw new Error(`Duplicate operation '${option.value}' for resource '${resourceName}'`);
-        }
-
-        options.push(option);
-    }
-
-    private addFields(fields: INodeProperties[]) {
-        this._fields.push(...fields);
-    }
-
-    private addOperation(operation: INodeProperties) {
-        this._operations.push(operation);
-    }
+export class OperationsCollector extends BaseOperationsCollector {
 }
