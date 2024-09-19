@@ -1,8 +1,10 @@
 import {INodeProperties, NodePropertyTypes} from 'n8n-workflow/dist/Interfaces';
 import * as lodash from 'lodash';
 import {OpenAPIV3} from 'openapi-types';
-import {RefResolver} from "./RefResolver";
+import {RefResolver} from "./openapi/RefResolver";
 import pino from 'pino';
+import {OpenAPIWalker} from "./openapi/OpenAPIWalker";
+import {ResourcePropertiesCollector, toResource} from "./ResourcePropertiesCollector";
 
 interface Action {
     uri: string;
@@ -14,11 +16,6 @@ interface Action {
  */
 function replaceToParameter(uri: string): string {
     return uri.replace(/{([^}]*)}/g, '{{$parameter["$1"]}}');
-}
-
-function toResource(name: string) {
-    // keep only ascii, no emojis
-    return name.replace(/[^a-zA-Z0-9]/g, '');
 }
 
 const HttpMethods: string[] = Object.values(OpenAPIV3.HttpMethods);
@@ -49,6 +46,7 @@ export class Parser {
     private readonly addUriAfterOperation: boolean;
 
     private readonly doc: OpenAPIV3.Document;
+    private readonly walker: OpenAPIWalker;
 
     constructor(doc: any, config?: ParserConfig) {
         this.doc = doc
@@ -58,6 +56,7 @@ export class Parser {
 
         this.logger = config?.logger || pino()
         this.addUriAfterOperation = config ? config.addUriAfterOperation : true
+        this.walker = new OpenAPIWalker(this.doc)
     }
 
     get properties(): INodeProperties[] {
@@ -174,23 +173,9 @@ export class Parser {
     }
 
     parseResources() {
-        const tags = this.doc.tags || [];
-        const options = tags.map((tag) => {
-            const name = tag.name;
-            return {
-                name: name,
-                value: toResource(name),
-                description: tag.description,
-            };
-        });
-        this.resourceNode = {
-            displayName: 'Resource',
-            name: 'resource',
-            type: 'options',
-            noDataExpression: true,
-            options: options,
-            default: '',
-        };
+        const collector = new ResourcePropertiesCollector(this.logger)
+        this.walker.walk(collector)
+        this.resourceNode = collector.props
     }
 
     /**
