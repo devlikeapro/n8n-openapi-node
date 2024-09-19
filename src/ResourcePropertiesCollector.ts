@@ -55,7 +55,7 @@ export class ResourcePropertiesCollector implements OpenAPIVisitor {
         return tags;
     }
 
-    visitOperation(path: OpenAPIV3.PathItemObject, method: OpenAPIV3.HttpMethods, operation: OpenAPIV3.OperationObject) {
+    visitOperation(pattern: string, pathItem: OpenAPIV3.PathItemObject, method: OpenAPIV3.HttpMethods, operation: OpenAPIV3.OperationObject) {
         const tags = operation.tags;
         if (!tags || tags.length === 0) {
             this.logger.warn(`No tags found for operation '${operation}'`);

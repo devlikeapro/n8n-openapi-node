@@ -38,7 +38,7 @@ export class OpenAPIWalker {
             for (const method of HttpMethods) {
                 const operation = pathItem[method as OpenAPIV3.HttpMethods];
                 if (operation && visitor.visitOperation) {
-                    visitor.visitOperation(pathItem, method as OpenAPIV3.HttpMethods, operation);
+                    visitor.visitOperation(path, pathItem, method as OpenAPIV3.HttpMethods, operation);
                 }
             }
         }
