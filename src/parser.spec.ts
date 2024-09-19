@@ -489,7 +489,71 @@ test('body "array" param', () => {
         const parser = new Parser({paths}, {OperationsCollectorClass: BaseOperationsCollector});
         const result = parser.process()
 
-        const expected: any[] = []
+    const expected: any[] = [
+        {
+            "default": "",
+            "displayName": "Resource",
+            "name": "resource",
+            "noDataExpression": true,
+            "options": [
+                {
+                    "description": "",
+                    "name": "🖥️ Entity",
+                    "value": "Entity"
+                }
+            ],
+            "type": "options"
+        },
+        {
+            "default": "",
+            "displayName": "Operation",
+            "displayOptions": {
+                "show": {
+                    "resource": [
+                        "Entity"
+                    ]
+                }
+            },
+            "name": "operation",
+            "noDataExpression": true,
+            "options": [
+                {
+                    "action": "Create entity",
+                    "description": "Create entity",
+                    "name": "Create",
+                    "routing": {
+                        "request": {
+                            "method": "POST",
+                            "url": "=/api/entities"
+                        }
+                    },
+                    "value": "Create"
+                }
+            ],
+            "type": "options"
+        },
+        {
+            "default": "",
+            "displayName": "Body",
+            "displayOptions": {
+                "show": {
+                    "operation": [
+                        "Create"
+                    ],
+                    "resource": [
+                        "Entity"
+                    ]
+                }
+            },
+            "name": "body",
+            "routing": {
+                "request": {
+                    "body": "={{ JSON.parse($value) }}"
+                }
+            },
+            "type": "string"
+        }
+    ]
         expect(result).toEqual(expected)
     }
 )

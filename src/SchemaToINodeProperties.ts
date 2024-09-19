@@ -146,18 +146,34 @@ export class N8NINodeProperties {
             return []
         }
         const requestBodySchema = content.schema!!;
-        const requestSchema = this.refResolver.resolve<OpenAPIV3.SchemaObject>(requestBodySchema)
-        if (requestSchema.type != 'object') {
-            this.logger.warn(`Request body schema type '${requestSchema.type}' not supported`);
+        const schema = this.refResolver.resolve<OpenAPIV3.SchemaObject>(requestBodySchema)
+        if (schema.type != 'object' && schema.type != 'array') {
+            this.logger.warn(`Request body schema type '${schema.type}' not supported`);
         }
 
-        const properties = requestSchema.properties;
         const fields = [];
+        if (schema.type === "array" && schema.items) {
+            const innerSchema = this.refResolver.resolve<OpenAPIV3.SchemaObject>(schema.items)
+            const fieldPropertyKeys: FromSchemaNodeProperty = this.fromSchemaProperty("body", innerSchema)
+            const fieldDefaults: Partial<INodeProperties> = {
+                required: !!schema.required
+            }
+            const field = combineINodeProperties(fieldDefaults, fieldPropertyKeys)
+            field.routing = {
+                request: {
+                    body: '={{ JSON.parse($value) }}'
+                },
+            };
+            fields.push(field);
+        }
+
+
+        const properties = schema.properties;
         for (const key in properties) {
             const property = properties[key];
             const fieldPropertyKeys: FromSchemaNodeProperty = this.fromSchemaProperty(key, property)
             const fieldDefaults: Partial<INodeProperties> = {
-                required: requestSchema.required && requestSchema.required?.includes(key),
+                required: schema.required && schema.required?.includes(key),
             }
             const field = combineINodeProperties(fieldDefaults, fieldPropertyKeys)
             if (field.type === 'json') {
