@@ -18,7 +18,7 @@ export class ResourcePropertiesCollector implements OpenAPIVisitor {
     private logger: pino.Logger;
 
     constructor(logger: pino.Logger) {
-        this.logger = logger.child({class: 'ResourcePropertiesCollector'});
+        this.logger = logger
         this.tags = new Map<string, TagObject>()
     }
 

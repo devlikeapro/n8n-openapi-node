@@ -462,3 +462,34 @@ test('enum schema', () => {
         },
     ]);
 });
+
+test('body "array" param', () => {
+        const paths = {
+            '/api/entities': {
+                post: {
+                    operationId: 'EntityController_create',
+                    summary: 'Create entity',
+                    requestBody: {
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'array',
+                                    items: {
+                                        type: 'string',
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    tags: ['🖥️ Entity'],
+                },
+            },
+        };
+
+        const parser = new Parser({paths}, {OperationsCollectorClass: BaseOperationsCollector});
+        const result = parser.process()
+
+        const expected: any[] = []
+        expect(result).toEqual(expected)
+    }
+)

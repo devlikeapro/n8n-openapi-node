@@ -33,7 +33,7 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
     protected operationParser: IOperationParser = new N8NOperationParser()
 
     constructor(logger: pino.Logger, doc: any) {
-        this.logger = logger.child({class: 'OperationsCollector'});
+        this.logger = logger.child({})
         this._fields = []
         this.n8nNodeProperties = new N8NINodeProperties(this.logger, doc)
     }
@@ -68,10 +68,14 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
     }
 
     visitOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
-        // TODO: Move to new mixin or what?
-        if (operation.deprecated) {
-            return;
+        const bindings = {
+            operation: {
+                pattern: context.pattern,
+                method: context.method,
+                operationId: operation.operationId
+            }
         }
+        this.logger.setBindings(bindings)
         const tags = operation.tags;
         if (!tags || tags.length === 0) {
             throw new Error(`No tags found for operation '${operation}'`);
@@ -135,19 +139,45 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
     }
 }
 
-export class OperationsCollector extends BaseOperationsCollector {
-    protected parseOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
-        const result = super.parseOperation(operation, context)
-        const notice: INodeProperties = {
-            displayName: `${context.method.toUpperCase()} ${context.pattern}`,
-            name: 'operation',
-            type: 'notice',
-            typeOptions: {
-                theme: 'info',
-            },
-            default: '',
-        };
-        result.fields.unshift(notice);
-        return result
+/**
+ * Skip deprecated operations
+ * @param Base
+ * @constructor
+ */
+function SkipDeprecatedMixin<TBase extends new (...args: any[]) => BaseOperationsCollector>(Base: TBase) {
+    return class extends Base {
+        visitOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
+            if (operation.deprecated) {
+                return;
+            }
+            super.visitOperation(operation, context);
+        }
     }
 }
+
+/**
+ * Add a notice field to the operation about WHAT request is being made
+ */
+function NoticeForOperationMixin<TBase extends new (...args: any[]) => BaseOperationsCollector>(Base: TBase) {
+    return class extends Base {
+        protected parseOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
+            const result = super.parseOperation(operation, context)
+            const notice: INodeProperties = {
+                displayName: `${context.method.toUpperCase()} ${context.pattern}`,
+                name: 'operation',
+                type: 'notice',
+                typeOptions: {
+                    theme: 'info',
+                },
+                default: '',
+            };
+            result.fields.unshift(notice);
+            return result
+        }
+    }
+}
+
+export class OperationsCollector
+    extends SkipDeprecatedMixin(NoticeForOperationMixin(BaseOperationsCollector)) {
+}
+

@@ -27,7 +27,7 @@ export class N8NINodeProperties {
     private schemaExample: SchemaExample;
 
     constructor(logger: pino.Logger, doc: any) {
-        this.logger = logger.child({class: 'N8NINodeProperties'})
+        this.logger = logger
         this.refResolver = new RefResolver(doc)
         this.schemaExample = new SchemaExample(doc)
     }
