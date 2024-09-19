@@ -5,7 +5,7 @@ export class RefResolver {
 
     }
 
-    resolve(ref: string): OpenAPIV3.SchemaObject {
+    resolveRef(ref: string): OpenAPIV3.SchemaObject {
         const refPath = ref.split('/').slice(1);
         let schema: any = this.doc;
         for (const path of refPath) {
@@ -16,8 +16,15 @@ export class RefResolver {
             }
         }
         if ('$ref' in schema) {
-            return this.resolve(schema['$ref']);
+            return this.resolveRef(schema['$ref']);
         }
         return schema;
+    }
+
+    resolve(schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject): OpenAPIV3.SchemaObject {
+        if ('$ref' in schema) {
+            return this.resolveRef(schema['$ref']);
+        }
+        return schema
     }
 }

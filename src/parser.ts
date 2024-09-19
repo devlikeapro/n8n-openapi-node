@@ -183,9 +183,8 @@ export class Parser {
      * @param schema
      */
     extractExample(schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject): any {
-        if ('$ref' in schema) {
-            return this.extractExample(this.resolveRef(schema['$ref']));
-        }
+        schema = this.resolveSchema(schema)
+
         if ('oneOf' in schema) {
             return this.extractExample(schema.oneOf!![0]);
         }
@@ -362,14 +361,7 @@ export class Parser {
     }
 
     private resolveSchema(schema: any) {
-        if ('$ref' in schema) {
-            return this.resolveRef(schema['$ref']);
-        }
-        return schema;
-    }
-
-    private resolveRef(ref: string): OpenAPIV3.SchemaObject {
-        return this.refResolver.resolve(ref)
+        return this.refResolver.resolve(schema)
     }
 
     private parseOperations() {
