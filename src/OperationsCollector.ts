@@ -1,10 +1,10 @@
 import {OpenAPIVisitor, OperationContext} from "./openapi/OpenAPIVisitor";
 import pino from "pino";
 import {OpenAPIV3} from "openapi-types";
-import {INodeProperties} from "n8n-workflow/dist/Interfaces";
 import {N8NINodeProperties} from "./SchemaToINodeProperties";
 import {IOperationParser, N8NOperationParser} from "./OperationParser";
 import {OptionsByResourceMap} from "./n8n/OptionsByResourceMap";
+import {INodeProperties} from "n8n-workflow";
 
 /**
  * /api/entities/{entity} => /api/entities/{{$parameter["entity"]}}

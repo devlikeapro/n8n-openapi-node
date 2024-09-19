@@ -1,5 +1,5 @@
 import {OpenAPIV3} from "openapi-types";
-import {INodeProperties, NodePropertyTypes} from "n8n-workflow/dist/Interfaces";
+import {INodeProperties, NodePropertyTypes} from "n8n-workflow";
 import {RefResolver} from "./openapi/RefResolver";
 import * as lodash from "lodash";
 import {SchemaExample} from "./openapi/SchemaExample";

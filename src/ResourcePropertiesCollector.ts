@@ -1,6 +1,6 @@
 import {OpenAPIVisitor, OperationContext} from "./openapi/OpenAPIVisitor";
 import {OpenAPIV3} from "openapi-types";
-import {INodeProperties} from "n8n-workflow/dist/Interfaces";
+import {INodeProperties} from "n8n-workflow";
 import {toResourceName} from "./n8n/utils";
 
 interface TagObject {

@@ -1,4 +1,4 @@
-import {INodeProperties} from 'n8n-workflow/dist/Interfaces';
+import {INodeProperties} from 'n8n-workflow';
 import {OpenAPIV3} from 'openapi-types';
 import pino from 'pino';
 import {OpenAPIWalker} from "./openapi/OpenAPIWalker";
