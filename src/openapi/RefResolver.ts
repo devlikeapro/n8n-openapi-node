@@ -21,14 +21,31 @@ export class RefResolver {
         return schema;
     }
 
-    resolve(schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject): OpenAPIV3.SchemaObject {
+    resolve<T>(schema: OpenAPIV3.ReferenceObject | T): T {
+        // @ts-ignore
+        if ("oneOf" in schema) {
+            // @ts-ignore
+            return this.resolve(schema.oneOf[0]);
+        }
+        // @ts-ignore
+        if ("anyOf" in schema) {
+            // @ts-ignore
+            return this.resolve(schema.anyOf[0]);
+        }
+        // @ts-ignore
+        if ("allOf" in schema) {
+            // @ts-ignore
+            const schemas = schema.allOf.map((s) => this.resolve(s));
+            return Object.assign({}, ...schemas) as T;
+        }
+        // @ts-ignore
         if ('$ref' in schema) {
             const schemaResolved = this.resolveRef(schema['$ref']);
             // Remove $ref from schema, add all other properties
             const {$ref, ...rest} = schema;
             Object.assign(rest, schemaResolved);
-            return rest;
+            return rest as T
         }
-        return schema
+        return schema as T
     }
 }

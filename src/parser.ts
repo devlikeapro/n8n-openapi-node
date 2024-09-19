@@ -1,4 +1,4 @@
-import {INodeProperties, NodePropertyTypes} from 'n8n-workflow/dist/Interfaces';
+import {INodeProperties} from 'n8n-workflow/dist/Interfaces';
 import * as lodash from 'lodash';
 import {OpenAPIV3} from 'openapi-types';
 import {RefResolver} from "./openapi/RefResolver";
@@ -64,7 +64,7 @@ export class Parser {
         this.walker = new OpenAPIWalker(this.doc)
         this.refResolver = new RefResolver(doc)
         this.schemaExample = new SchemaExample(doc)
-        this.n8nNodeProperties = new N8NINodeProperties(doc)
+        this.n8nNodeProperties = new N8NINodeProperties(this.logger, doc)
     }
 
     get properties(): INodeProperties[] {
@@ -122,12 +122,12 @@ export class Parser {
             operationId = operation.operationId as string
         }
 
-        const name = lodash.startCase(operationId);
+        const operationName = lodash.startCase(operationId);
         const description = operation.description || operation.summary || '';
         const option = {
-            name: name,
-            value: name,
-            action: operation.summary || name,
+            name: operationName,
+            value: operationName,
+            action: operation.summary || operationName,
             description: description,
             routing: {
                 request: {
@@ -136,7 +136,7 @@ export class Parser {
                 },
             },
         };
-        const fields = this.parseFields(resourceName, name, operation);
+        const fields = this.parseFields(resourceName, operationName, operation);
 
         if (this.addUriAfterOperation) {
             const notice = {
@@ -149,7 +149,7 @@ export class Parser {
                 displayOptions: {
                     show: {
                         resource: [resourceName],
-                        operation: [name],
+                        operation: [operationName],
                     },
                 },
                 default: '',
@@ -166,15 +166,21 @@ export class Parser {
 
     parseFields(resourceName: string, operationName: string, operation: any) {
         const fields = [];
-
-        const parameterFields = this.parseParameterFields(
-            operation.parameters,
-            resourceName,
-            operationName,
-        );
+        const parameterFields = this.n8nNodeProperties.fromParameters(operation.parameters)
         fields.push(...parameterFields);
-        const bodyFields = this.parseRequestBody(operation.requestBody, resourceName, operationName);
+        const bodyFields = this.n8nNodeProperties.fromRequestBody(operation.requestBody)
         fields.push(...bodyFields);
+
+        const displayOptions = {
+            show: {
+                resource: [resourceName],
+                operation: [operationName],
+            },
+        }
+        fields.forEach((field) => {
+            field.displayOptions = displayOptions
+        })
+
         // sort fields, so "session" always top
         fields.sort(sessionFirst);
         return fields;
@@ -184,151 +190,6 @@ export class Parser {
         const collector = new ResourcePropertiesCollector(this.logger)
         this.walker.walk(collector)
         this.resourceNode = collector.props
-    }
-
-    private parseParameterFields(parameters: any[], resourceName: string, operationName: string) {
-        if (!parameters) {
-            return [];
-        }
-        const fields = [];
-        for (const parameter of parameters) {
-            const field = this.n8nNodeProperties.fromParameter(parameter)
-            field.displayOptions = {
-                show: {
-                    resource: [resourceName],
-                    operation: [operationName],
-                },
-            }
-            fields.push(field);
-        }
-        return fields;
-    }
-
-    private parseParam(parameter: any, resourceName: string, operationName: string) {
-        const name = parameter.name;
-        let schemaType = parameter.schema.type;
-        if (!schemaType) {
-            if (parameter.schema['$ref'] || parameter.schema['oneOf'] || parameter.schema['allOf']) {
-                schemaType = 'json';
-            }
-        }
-
-        let type: NodePropertyTypes;
-        let defaultValue = parameter.example;
-        if (defaultValue === undefined) {
-            defaultValue = this.schemaExample.extractExample(parameter.schema)
-        }
-        switch (schemaType) {
-            case 'boolean':
-                type = 'boolean';
-                defaultValue = defaultValue !== undefined ? defaultValue : true;
-                break;
-            case 'string':
-            case undefined:
-                type = 'string';
-                defaultValue = defaultValue !== undefined ? defaultValue : '';
-                break;
-            case 'object':
-            case 'json':
-                type = 'json';
-                defaultValue = defaultValue !== undefined ? JSON.stringify(defaultValue, null, 2) : '{}';
-                break;
-            case 'array':
-                type = 'json';
-                defaultValue = defaultValue !== undefined ? JSON.stringify(defaultValue, null, 2) : '[]';
-                break;
-            case 'number':
-            case 'integer':
-                type = 'number';
-                defaultValue = defaultValue !== undefined ? defaultValue : 0;
-                break;
-            default:
-                throw new Error(`Type '${schemaType}' not supported - '${name}'`);
-        }
-
-        const field: INodeProperties = {
-            displayName: lodash.startCase(name),
-            name: name,
-            type: type,
-            required: parameter.required || undefined,
-            displayOptions: {
-                show: {
-                    resource: [resourceName],
-                    operation: [operationName],
-                },
-            },
-            default: defaultValue,
-            // eslint-disable-next-line n8n-nodes-base/node-param-description-boolean-without-whether
-            description: parameter.description || parameter.schema.description,
-        };
-        if ('enum' in parameter.schema && schemaType === 'string') {
-            field.type = 'options';
-            field.options = parameter.schema.enum.map((value: string) => {
-                return {
-                    name: lodash.startCase(value),
-                    value: value,
-                };
-            });
-            // @ts-ignore
-            field.default = field.default ? field.default : field.options!![0].value;
-        }
-
-        return field;
-    }
-
-    private parseRequestBody(
-        requestBody: any,
-        resourceName: string,
-        operationName: string,
-    ): INodeProperties[] {
-        if (!requestBody) {
-            return [];
-        }
-        const content = requestBody.content['application/json'] || requestBody.content['application/json; charset=utf-8'];
-        if (!content) {
-            this.logger.warn(`No 'application/json' content found for operation '${operationName}'`);
-            return []
-        }
-        const requestBodySchema = content.schema;
-        const requestSchema = this.refResolver.resolve(requestBodySchema)
-        if (requestSchema.type != 'object') {
-            this.logger.warn(`Request body schema type '${requestSchema.type}' not supported for operation '${operationName}'`);
-        }
-        const properties = requestSchema.properties;
-        const fields = [];
-        for (const key in properties) {
-            const property = properties[key];
-            const field = this.parseParam(
-                {
-                    name: key,
-                    schema: property,
-                    required: requestSchema.required && requestSchema.required?.includes(key),
-                    // @ts-ignore
-                    description: property.description,
-                },
-                resourceName,
-                operationName,
-            );
-            if (field.type === 'json') {
-                field.routing = {
-                    request: {
-                        body: {
-                            [key]: '={{ JSON.parse($value) }}',
-                        },
-                    },
-                };
-            } else {
-                field.routing = {
-                    request: {
-                        body: {
-                            [key]: '={{ $value }}',
-                        },
-                    },
-                };
-            }
-            fields.push(field);
-        }
-        return fields;
     }
 
     private parseOperations() {
