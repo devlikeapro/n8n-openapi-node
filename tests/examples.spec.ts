@@ -9,7 +9,7 @@ test('petstore.json', async () => {
 test('waha.json', () => {
     const doc = require('./examples/waha.json');
     const parser = new Parser(doc);
-    parser.process()
+    const result = parser.process()
 
     const expected = [
         {
@@ -7799,7 +7799,7 @@ test('waha.json', () => {
             "type": "boolean"
         }
     ]
-    expect(parser.properties).toEqual(expected);
+    expect(result).toEqual(expected);
 })
 
 test('chatwoot.json', () => {

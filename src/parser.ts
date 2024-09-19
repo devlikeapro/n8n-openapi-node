@@ -34,28 +34,16 @@ export class Parser {
         this.walker = new OpenAPIWalker(this.doc)
     }
 
-    get properties(): INodeProperties[] {
-        if (!this.resourceNode) {
-            throw new Error('Resource node not found');
-        }
-        return [this.resourceNode, ...this.operations, ...this.fields];
-    }
+    process(): INodeProperties[] {
+        const resourcePropertiesCollector = new ResourcePropertiesCollector(this.logger)
+        this.walker.walk(resourcePropertiesCollector)
+        const resourceNode = resourcePropertiesCollector.iNodeProperty
 
-    process() {
-        this.parseResources();
-        this.parseOperations();
-    }
+        const operationsCollector = new OperationsCollector(this.logger, this.doc, this.addUriAfterOperation)
+        this.walker.walk(operationsCollector)
+        const operations = operationsCollector.operations
+        const fields = operationsCollector.fields
 
-    private parseResources() {
-        const collector = new ResourcePropertiesCollector(this.logger)
-        this.walker.walk(collector)
-        this.resourceNode = collector.iNodeProperty
-    }
-
-    private parseOperations() {
-        const collector = new OperationsCollector(this.logger, this.doc, this.addUriAfterOperation)
-        this.walker.walk(collector)
-        this.operations = collector.operations
-        this.fields = collector.fields
+        return [resourceNode, ...operations, ...fields]
     }
 }

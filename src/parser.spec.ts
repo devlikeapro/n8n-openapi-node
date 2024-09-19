@@ -25,8 +25,8 @@ test('query param', () => {
 
     // @ts-ignore
     const parser = new Parser({paths}, {addUriAfterOperation: true});
-    parser.process()
-    const result = parser.properties
+    const result = parser.process()
+
     expect(result).toEqual([
         {
             "default": "",
@@ -132,8 +132,7 @@ test('path param', () => {
 
     // @ts-ignore
     const parser = new Parser({paths}, {addUriAfterOperation: false});
-    parser.process()
-    const result = parser.properties
+    const result = parser.process()
     expect(result).toEqual([
         {
             "default": "",
@@ -249,8 +248,7 @@ test('request body', () => {
 
     // @ts-ignore
     const parser = new Parser({paths, components}, {addUriAfterOperation: false});
-    parser.process()
-    const result = parser.properties
+    const result = parser.process()
 
     expect(result).toEqual([
         {
@@ -389,8 +387,7 @@ test('enum schema', () => {
 
     // @ts-ignore
     const parser = new Parser({paths}, {addUriAfterOperation: false});
-    parser.process()
-    const result = parser.properties
+    const result = parser.process()
 
     expect(result).toEqual([
         {

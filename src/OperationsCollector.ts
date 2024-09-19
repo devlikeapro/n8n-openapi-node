@@ -24,7 +24,7 @@ function sessionFirst(a: any, b: any) {
 }
 
 export class OperationsCollector implements OpenAPIVisitor {
-    public readonly fields: INodeProperties[]
+    public readonly _fields: INodeProperties[]
     private operationByResource: Map<string, any[]> = new Map();
     private readonly logger: pino.Logger;
     private readonly _operations: INodeProperties[];
@@ -32,19 +32,20 @@ export class OperationsCollector implements OpenAPIVisitor {
 
     constructor(logger: pino.Logger, doc: any, private addUriAfterOperation: boolean) {
         this.logger = logger.child({class: 'OperationsCollector'});
-        this.fields = []
+        this._fields = []
         this._operations = []
         this.n8nNodeProperties = new N8NINodeProperties(this.logger, doc)
     }
 
     get operations() {
         if (this._operations.length === 0) {
-            this.postProcessOperations()
-        }
-        if (this._operations.length === 0) {
             throw new Error('No operations found in OpenAPI document')
         }
         return [...this._operations]
+    }
+
+    get fields() {
+        return [...this._fields]
     }
 
     visitOperation(pattern: string,
@@ -140,7 +141,7 @@ export class OperationsCollector implements OpenAPIVisitor {
         return fields;
     }
 
-    private postProcessOperations() {
+    finish() {
         for (const [resource, options] of this.operationByResource) {
             const operation = {
                 displayName: 'Operation',
@@ -173,7 +174,7 @@ export class OperationsCollector implements OpenAPIVisitor {
     }
 
     private addFields(fields: INodeProperties[]) {
-        this.fields.push(...fields);
+        this._fields.push(...fields);
     }
 
     private addOperation(operation: INodeProperties) {

@@ -7,4 +7,6 @@ export interface OpenAPIVisitor {
     visitOperation?(pattern: string, path: OpenAPIV3.PathItemObject, method: OpenAPIV3.HttpMethods, operation: OpenAPIV3.OperationObject): void;
 
     visitTag?(tag: OpenAPIV3.TagObject): void;
+
+    finish?(): void;
 }

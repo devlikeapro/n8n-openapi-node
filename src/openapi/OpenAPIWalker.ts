@@ -15,6 +15,9 @@ export class OpenAPIWalker {
         this.walkDocument(visitor);
         this.walkPaths(visitor);
         this.walkTags(visitor);
+        if (visitor.finish) {
+            visitor.finish();
+        }
     }
 
     private walkDocument(visitor: OpenAPIVisitor, doc?: OpenAPIV3.Document) {
