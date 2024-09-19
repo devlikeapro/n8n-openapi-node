@@ -3,42 +3,38 @@ import {OpenAPIV3} from 'openapi-types';
 import pino from 'pino';
 import {OpenAPIWalker} from "./openapi/OpenAPIWalker";
 import {ResourcePropertiesCollector} from "./ResourcePropertiesCollector";
-import {BaseOperationsCollector} from "./OperationsCollector";
+import {BaseOperationsCollector, OperationsCollector} from "./OperationsCollector";
 
 
 export interface ParserConfig {
     logger?: pino.Logger;
-    addUriAfterOperation: boolean;
+    OperationsCollectorClass?: typeof BaseOperationsCollector,
+    ResourcePropertiesCollectorClass?: typeof ResourcePropertiesCollector
 }
 
 export class Parser {
-    public operations: INodeProperties[];
-    public fields: INodeProperties[];
-
-    private logger: pino.Logger
-    private readonly addUriAfterOperation: boolean;
-
     private readonly doc: OpenAPIV3.Document;
-
-    // OpenAPI helpers
+    private readonly logger: pino.Logger
     private readonly walker: OpenAPIWalker;
+
+    // DI
+    private readonly OperationsCollectorClass: typeof BaseOperationsCollector;
+    private readonly ResourcePropertiesCollectorClass: typeof ResourcePropertiesCollector;
 
     constructor(doc: any, config?: ParserConfig) {
         this.doc = doc
-        this.operations = [];
-        this.fields = []
-
         this.logger = config?.logger || pino()
-        this.addUriAfterOperation = config ? config.addUriAfterOperation : true
         this.walker = new OpenAPIWalker(this.doc)
+        this.OperationsCollectorClass = config?.OperationsCollectorClass ? config.OperationsCollectorClass : OperationsCollector
+        this.ResourcePropertiesCollectorClass = config?.ResourcePropertiesCollectorClass ? config.ResourcePropertiesCollectorClass : ResourcePropertiesCollector
     }
 
     process(): INodeProperties[] {
-        const resourcePropertiesCollector = new ResourcePropertiesCollector(this.logger)
+        const resourcePropertiesCollector = new this.ResourcePropertiesCollectorClass(this.logger)
         this.walker.walk(resourcePropertiesCollector)
         const resourceNode = resourcePropertiesCollector.iNodeProperty
 
-        const operationsCollector = new BaseOperationsCollector(this.logger, this.doc, this.addUriAfterOperation)
+        const operationsCollector = new this.OperationsCollectorClass(this.logger, this.doc)
         this.walker.walk(operationsCollector)
         const operations = operationsCollector.operations
         const fields = operationsCollector.fields

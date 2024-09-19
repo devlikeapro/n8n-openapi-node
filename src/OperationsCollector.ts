@@ -32,7 +32,7 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
     // Dependency injection light version
     protected operationParser: IOperationParser = new N8NOperationParser()
 
-    constructor(logger: pino.Logger, doc: any, private addUriAfterOperation: boolean) {
+    constructor(logger: pino.Logger, doc: any) {
         this.logger = logger.child({class: 'OperationsCollector'});
         this._fields = []
         this.n8nNodeProperties = new N8NINodeProperties(this.logger, doc)
@@ -84,7 +84,7 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
         this._fields.push(...fields)
     }
 
-    parseOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
+    protected parseOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
         const method = context.method
         const uri = context.pattern;
         const operationName = this.operationParser.getOperationName(operation, context);
@@ -104,19 +104,6 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
         };
         const fields = this.parseFields(operation);
 
-        if (this.addUriAfterOperation) {
-            // TODO: Move to new mixin or what?
-            const notice: INodeProperties = {
-                displayName: `${method.toUpperCase()} ${uri}`,
-                name: 'operation',
-                type: 'notice',
-                typeOptions: {
-                    theme: 'info',
-                },
-                default: '',
-            };
-            fields.unshift(notice);
-        }
 
         return {
             option: option,
@@ -149,4 +136,18 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
 }
 
 export class OperationsCollector extends BaseOperationsCollector {
+    protected parseOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
+        const result = super.parseOperation(operation, context)
+        const notice: INodeProperties = {
+            displayName: `${context.method.toUpperCase()} ${context.pattern}`,
+            name: 'operation',
+            type: 'notice',
+            typeOptions: {
+                theme: 'info',
+            },
+            default: '',
+        };
+        result.fields.unshift(notice);
+        return result
+    }
 }

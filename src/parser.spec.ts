@@ -1,4 +1,5 @@
 import {Parser} from './parser';
+import {BaseOperationsCollector} from "./OperationsCollector";
 
 test('query param', () => {
     const paths = {
@@ -23,8 +24,7 @@ test('query param', () => {
         },
     };
 
-    // @ts-ignore
-    const parser = new Parser({paths}, {addUriAfterOperation: true});
+    const parser = new Parser({paths});
     const result = parser.process()
 
     expect(result).toEqual([
@@ -130,8 +130,7 @@ test('path param', () => {
         },
     };
 
-    // @ts-ignore
-    const parser = new Parser({paths}, {addUriAfterOperation: false});
+    const parser = new Parser({paths}, {OperationsCollectorClass: BaseOperationsCollector});
     const result = parser.process()
     expect(result).toEqual([
         {
@@ -246,8 +245,7 @@ test('request body', () => {
         },
     };
 
-    // @ts-ignore
-    const parser = new Parser({paths, components}, {addUriAfterOperation: false});
+    const parser = new Parser({paths, components}, {OperationsCollectorClass: BaseOperationsCollector});
     const result = parser.process()
 
     expect(result).toEqual([
@@ -386,7 +384,7 @@ test('enum schema', () => {
     };
 
     // @ts-ignore
-    const parser = new Parser({paths}, {addUriAfterOperation: false});
+    const parser = new Parser({paths}, {OperationsCollectorClass: BaseOperationsCollector});
     const result = parser.process()
 
     expect(result).toEqual([
