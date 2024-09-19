@@ -1,12 +1,8 @@
-import {OpenAPIVisitor} from "./openapi/OpenAPIVisitor";
+import {OpenAPIVisitor, OperationContext} from "./openapi/OpenAPIVisitor";
 import pino from "pino";
 import {OpenAPIV3} from "openapi-types";
 import {INodeProperties} from "n8n-workflow/dist/Interfaces";
-
-export function toResource(name: string) {
-    // keep only ascii, no emojis
-    return name.replace(/[^a-zA-Z0-9]/g, '');
-}
+import {toResourceName} from "./n8n/utils";
 
 interface TagObject {
     name: string;
@@ -34,7 +30,7 @@ export class ResourcePropertiesCollector implements OpenAPIVisitor {
         const options = tags.map((tag) => {
             return {
                 name: tag.name,
-                value: toResource(tag.name),
+                value: toResourceName(tag.name),
                 description: tag.description,
             };
         });
@@ -56,7 +52,7 @@ export class ResourcePropertiesCollector implements OpenAPIVisitor {
         return tags;
     }
 
-    visitOperation(pattern: string, pathItem: OpenAPIV3.PathItemObject, method: OpenAPIV3.HttpMethods, operation: OpenAPIV3.OperationObject) {
+    visitOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
         const tags = operation.tags;
         if (!tags || tags.length === 0) {
             this.logger.warn(`No tags found for operation '${operation}'`);

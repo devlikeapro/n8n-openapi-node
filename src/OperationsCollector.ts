@@ -1,10 +1,10 @@
-import {OpenAPIVisitor} from "./openapi/OpenAPIVisitor";
+import {OpenAPIVisitor, OperationContext} from "./openapi/OpenAPIVisitor";
 import pino from "pino";
 import {OpenAPIV3} from "openapi-types";
 import {INodeProperties} from "n8n-workflow/dist/Interfaces";
 import * as lodash from "lodash";
-import {toResource} from "./ResourcePropertiesCollector";
 import {N8NINodeProperties} from "./SchemaToINodeProperties";
+import {IOperationParser, N8NOperationParser} from "./OperationParser";
 
 /**
  * /api/entities/{entity} => /api/entities/{{$parameter["entity"]}}
@@ -30,6 +30,9 @@ export class OperationsCollector implements OpenAPIVisitor {
     private readonly _operations: INodeProperties[];
     private n8nNodeProperties: N8NINodeProperties;
 
+    // Dependency injection light version
+    protected operationParser: IOperationParser = new N8NOperationParser()
+
     constructor(logger: pino.Logger, doc: any, private addUriAfterOperation: boolean) {
         this.logger = logger.child({class: 'OperationsCollector'});
         this._fields = []
@@ -48,11 +51,8 @@ export class OperationsCollector implements OpenAPIVisitor {
         return [...this._fields]
     }
 
-    visitOperation(pattern: string,
-                   path: OpenAPIV3.PathItemObject,
-                   method: OpenAPIV3.HttpMethods,
-                   operation: OpenAPIV3.OperationObject,
-    ) {
+    visitOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
+        // TODO: Move to new mixin or what?
         if (operation.deprecated) {
             return;
         }
@@ -60,29 +60,24 @@ export class OperationsCollector implements OpenAPIVisitor {
         if (!tags || tags.length === 0) {
             throw new Error(`No tags found for operation '${operation}'`);
         }
-        const resourceName = toResource(tags[0]);
-        const {option, fields} = this.parseOperation(resourceName, operation, pattern, method);
+        const {option, fields} = this.parseOperation(operation, context);
+        const resourceName = this.operationParser.getResourceName(operation, context);
         this.addOption(resourceName, option);
         this.addFields(fields);
     }
 
-    parseOperation(
-        resourceName: string,
-        operation: OpenAPIV3.OperationObject,
-        uri: string,
-        method: string,
-    ) {
-        let operationId: string = operation.operationId!!.split('_').slice(1).join('_');
-        if (!operationId) {
-            operationId = operation.operationId as string
-        }
+    parseOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
+        const method = context.method
+        const uri = context.pattern;
+        const resourceName = this.operationParser.getResourceName(operation, context);
+        const operationName = this.operationParser.getOperationName(operation, context);
+        const optionAction = this.operationParser.getOptionAction(operation, context);
+        const description = this.operationParser.getOptionDescription(operation, context)
 
-        const operationName = lodash.startCase(operationId);
-        const description = operation.description || operation.summary || '';
         const option = {
             name: operationName,
             value: operationName,
-            action: operation.summary || operationName,
+            action: optionAction,
             description: description,
             routing: {
                 request: {
@@ -91,51 +86,47 @@ export class OperationsCollector implements OpenAPIVisitor {
                 },
             },
         };
-        const fields = this.parseFields(resourceName, operationName, operation);
+        const fields = this.parseFields(operation);
 
         if (this.addUriAfterOperation) {
-            const notice = {
+            // TODO: Move to new mixin or what?
+            const notice: INodeProperties = {
                 displayName: `${method.toUpperCase()} ${uri}`,
                 name: 'operation',
                 type: 'notice',
                 typeOptions: {
                     theme: 'info',
                 },
-                displayOptions: {
-                    show: {
-                        resource: [resourceName],
-                        operation: [operationName],
-                    },
-                },
                 default: '',
             };
-            // @ts-ignore
             fields.unshift(notice);
         }
 
+        this.addDisplayOption(fields, resourceName, operationName)
         return {
             option: option,
             fields: fields,
         };
     }
 
-    parseFields(resourceName: string, operationName: string, operation: any) {
-        const fields = [];
-        const parameterFields = this.n8nNodeProperties.fromParameters(operation.parameters)
-        fields.push(...parameterFields);
-        const bodyFields = this.n8nNodeProperties.fromRequestBody(operation.requestBody)
-        fields.push(...bodyFields);
-
+    addDisplayOption(fields: INodeProperties[], resource: string, operation: string) {
         const displayOptions = {
             show: {
-                resource: [resourceName],
-                operation: [operationName],
+                resource: [resource],
+                operation: [operation],
             },
         }
         fields.forEach((field) => {
             field.displayOptions = displayOptions
         })
+    }
 
+    parseFields(operation: OpenAPIV3.OperationObject) {
+        const fields = [];
+        const parameterFields = this.n8nNodeProperties.fromParameters(operation.parameters)
+        fields.push(...parameterFields);
+        const bodyFields = this.n8nNodeProperties.fromRequestBody(operation.requestBody)
+        fields.push(...bodyFields);
         // sort fields, so "session" always top
         fields.sort(sessionFirst);
         return fields;

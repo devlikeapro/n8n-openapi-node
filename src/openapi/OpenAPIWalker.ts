@@ -45,7 +45,8 @@ export class OpenAPIWalker {
                     continue;
                 }
                 if (operation && visitor.visitOperation) {
-                    visitor.visitOperation(path, pathItem, method as OpenAPIV3.HttpMethods, operation);
+                    const context = {pattern: path, path: pathItem, method: method as OpenAPIV3.HttpMethods};
+                    visitor.visitOperation(operation, context);
                 }
             }
         }

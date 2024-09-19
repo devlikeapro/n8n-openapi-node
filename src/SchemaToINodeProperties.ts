@@ -113,7 +113,7 @@ export class N8NINodeProperties {
         return field
     }
 
-    fromParameters(parameters: (OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject)[]): INodeProperties[] {
+    fromParameters(parameters: (OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject)[] | undefined): INodeProperties[] {
         if (!parameters) {
             return [];
         }
@@ -135,7 +135,7 @@ export class N8NINodeProperties {
         return field
     }
 
-    fromRequestBody(body: OpenAPIV3.ReferenceObject | OpenAPIV3.RequestBodyObject): INodeProperties[] {
+    fromRequestBody(body: OpenAPIV3.ReferenceObject | OpenAPIV3.RequestBodyObject | undefined): INodeProperties[] {
         if (!body) {
             return [];
         }
