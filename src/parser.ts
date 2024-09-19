@@ -5,6 +5,7 @@ import {RefResolver} from "./openapi/RefResolver";
 import pino from 'pino';
 import {OpenAPIWalker} from "./openapi/OpenAPIWalker";
 import {ResourcePropertiesCollector, toResource} from "./ResourcePropertiesCollector";
+import {SchemaExample} from "./openapi/SchemaExample";
 
 interface Action {
     uri: string;
@@ -41,22 +42,26 @@ export class Parser {
     public fields: INodeProperties[];
 
     private operationByResource: Map<string, any[]> = new Map();
-    private refResolver: RefResolver;
     private logger: pino.Logger
     private readonly addUriAfterOperation: boolean;
 
     private readonly doc: OpenAPIV3.Document;
+
+    // OpenAPI helpers
     private readonly walker: OpenAPIWalker;
+    private schemaExample: SchemaExample;
+    private refResolver: RefResolver;
 
     constructor(doc: any, config?: ParserConfig) {
         this.doc = doc
         this.operations = [];
         this.fields = [];
-        this.refResolver = new RefResolver(doc)
 
         this.logger = config?.logger || pino()
         this.addUriAfterOperation = config ? config.addUriAfterOperation : true
         this.walker = new OpenAPIWalker(this.doc)
+        this.refResolver = new RefResolver(doc)
+        this.schemaExample = new SchemaExample(doc)
     }
 
     get properties(): INodeProperties[] {
@@ -178,39 +183,6 @@ export class Parser {
         this.resourceNode = collector.props
     }
 
-    /**
-     * Recursively extract "example" or "default" field, resolving $refs if any
-     * @param schema
-     */
-    extractExample(schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject): any {
-        schema = this.resolveSchema(schema)
-
-        if ('oneOf' in schema) {
-            return this.extractExample(schema.oneOf!![0]);
-        }
-        if ('allOf' in schema) {
-            const examples = schema.allOf!!.map((s) => this.extractExample(s));
-            return Object.assign({}, ...examples);
-        }
-        if (schema.example !== undefined) {
-            return schema.example;
-        }
-        if (schema.default !== undefined) {
-            return schema.default;
-        }
-        if (schema.properties) {
-            const obj: any = {};
-            for (const key in schema.properties) {
-                obj[key] = this.extractExample(schema.properties[key]);
-            }
-            return obj;
-        }
-        if ('items' in schema && schema.items) {
-            return [this.extractExample(schema.items)];
-        }
-        return undefined;
-    }
-
     private parseParameterFields(parameters: any[], resourceName: string, operationName: string) {
         if (!parameters) {
             return [];
@@ -245,7 +217,7 @@ export class Parser {
         let type: NodePropertyTypes;
         let defaultValue = parameter.example;
         if (defaultValue === undefined) {
-            defaultValue = this.extractExample(parameter.schema);
+            defaultValue = this.schemaExample.extractExample(parameter.schema)
         }
         switch (schemaType) {
             case 'boolean':
