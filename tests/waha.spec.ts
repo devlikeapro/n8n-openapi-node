@@ -26,7 +26,6 @@ function SessionFirstMixin<TBase extends new (...args: any[]) => BaseOperationsC
 
 export class WAHAOperationsCollector
     extends SessionFirstMixin(OperationsCollector) {
-
 }
 
 test('waha.json', () => {
