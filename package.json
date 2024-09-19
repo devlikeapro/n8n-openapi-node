@@ -21,6 +21,11 @@
   "bugs": {
     "url": "https://github.com/devlikeapro/n8n-openapi-node/issues"
   },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js"
+    }
+  },
   "files": [
     "dist"
   ],
