@@ -20,6 +20,9 @@
   "bugs": {
     "url": "https://github.com/devlikeapro/n8n-openapi-node/issues"
   },
+  "files": [
+    "dist"
+  ],
   "homepage": "https://github.com/devlikeapro/n8n-openapi-node#readme",
   "devDependencies": {
     "@types/lodash": "^4.17.7",
