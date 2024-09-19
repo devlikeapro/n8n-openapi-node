@@ -35,8 +35,12 @@ export class OpenAPIWalker {
         }
         for (const path in paths) {
             const pathItem: OpenAPIV3.PathItemObject = paths[path] as OpenAPIV3.PathItemObject;
-            for (const method of HttpMethods) {
-                const operation = pathItem[method as OpenAPIV3.HttpMethods];
+            let method: string;
+            let operation: any;
+            for ([method, operation] of Object.entries(pathItem)) {
+                if (!HttpMethods.includes(method)) {
+                    continue;
+                }
                 if (operation && visitor.visitOperation) {
                     visitor.visitOperation(path, pathItem, method as OpenAPIV3.HttpMethods, operation);
                 }

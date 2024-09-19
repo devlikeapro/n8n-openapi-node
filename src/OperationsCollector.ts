@@ -1,16 +1,10 @@
-import {INodeProperties} from 'n8n-workflow/dist/Interfaces';
-import * as lodash from 'lodash';
-import {OpenAPIV3} from 'openapi-types';
-import pino from 'pino';
-import {OpenAPIWalker} from "./openapi/OpenAPIWalker";
-import {ResourcePropertiesCollector} from "./ResourcePropertiesCollector";
+import {OpenAPIVisitor} from "./openapi/OpenAPIVisitor";
+import pino from "pino";
+import {OpenAPIV3} from "openapi-types";
+import {INodeProperties} from "n8n-workflow/dist/Interfaces";
+import * as lodash from "lodash";
+import {toResource} from "./ResourcePropertiesCollector";
 import {N8NINodeProperties} from "./SchemaToINodeProperties";
-import {OperationsCollector} from "./OperationsCollector";
-
-interface Action {
-    uri: string;
-    method: 'get' | 'post' | 'put' | 'delete' | 'patch';
-}
 
 /**
  * /api/entities/{entity} => /api/entities/{{$parameter["entity"]}}
@@ -18,7 +12,6 @@ interface Action {
 function replaceToParameter(uri: string): string {
     return uri.replace(/{([^}]*)}/g, '{{$parameter["$1"]}}');
 }
-
 
 function sessionFirst(a: any, b: any) {
     if (a.name === 'session') {
@@ -30,75 +23,48 @@ function sessionFirst(a: any, b: any) {
     return 0;
 }
 
-export interface ParserConfig {
-    logger?: pino.Logger;
-    addUriAfterOperation: boolean;
-}
+export class OperationsCollector implements OpenAPIVisitor {
+    private logger: pino.Logger;
+    private operationByResource: Map<string, any[]> = new Map();
 
-export class Parser {
-    public resourceNode?: INodeProperties;
-    public operations: INodeProperties[];
-
-    private logger: pino.Logger
-    private readonly addUriAfterOperation: boolean;
-
-    private readonly doc: OpenAPIV3.Document;
-
-    // OpenAPI helpers
-    private readonly walker: OpenAPIWalker;
+    private readonly fields: INodeProperties[]
+    private readonly operations: INodeProperties[];
     private n8nNodeProperties: N8NINodeProperties;
 
-    constructor(doc: any, config?: ParserConfig) {
-        this.doc = doc
-        this.operations = [];
-
-        this.logger = config?.logger || pino()
-        this.addUriAfterOperation = config ? config.addUriAfterOperation : true
-        this.walker = new OpenAPIWalker(this.doc)
+    constructor(logger: pino.Logger, doc: any, private addUriAfterOperation: boolean) {
+        this.logger = logger.child({class: 'OperationsCollector'});
+        this.fields = []
+        this.operations = []
         this.n8nNodeProperties = new N8NINodeProperties(this.logger, doc)
     }
 
-    get properties(): INodeProperties[] {
-        if (!this.resourceNode) {
-            throw new Error('Resource node not found');
+    get iNodeProperties(): INodeProperties[] {
+        if (this.operations.length === 0) {
+            this.postProcessOperations()
         }
-        return [this.resourceNode, ...this.operations];
+        if (this.operations.length === 0) {
+            throw new Error('No operations found in OpenAPI document')
+        }
+
+        return [...this.operations, ...this.fields]
     }
 
-    private get paths(): OpenAPIV3.PathsObject {
-        return this.doc.paths;
-    }
-
-    process() {
-        this.parseResources();
-        this.parseOperations();
-    }
-
-    parse(resource: string, action: Action): INodeProperties[] {
-        const fieldNodes: any[] = [];
-        const options: any[] = [];
-        const ops: OpenAPIV3.PathItemObject = this.paths[action.uri]!!;
-        const operation = ops[action.method as OpenAPIV3.HttpMethods]!!;
-        const {option, fields} = this.parseOperation(resource, operation, action.uri, action.method);
-        options.push(option);
-        fieldNodes.push(...fields);
-
-        // eslint-disable-next-line
-        const operations = {
-            displayName: 'Operation',
-            name: 'operation',
-            type: 'options',
-            noDataExpression: true,
-            displayOptions: {
-                show: {
-                    resource: [resource],
-                },
-            },
-            options: options,
-            default: '',
-        };
-
-        return [operations, ...fieldNodes] as INodeProperties[];
+    visitOperation(pattern: string,
+                   path: OpenAPIV3.PathItemObject,
+                   method: OpenAPIV3.HttpMethods,
+                   operation: OpenAPIV3.OperationObject,
+    ) {
+        if (operation.deprecated) {
+            return;
+        }
+        const tags = operation.tags;
+        if (!tags || tags.length === 0) {
+            throw new Error(`No tags found for operation '${operation}'`);
+        }
+        const resourceName = toResource(tags[0]);
+        const {option, fields} = this.parseOperation(resourceName, operation, pattern, method);
+        this.addOption(resourceName, option);
+        this.addFields(fields);
     }
 
     parseOperation(
@@ -176,15 +142,44 @@ export class Parser {
         return fields;
     }
 
-    private parseResources() {
-        const collector = new ResourcePropertiesCollector(this.logger)
-        this.walker.walk(collector)
-        this.resourceNode = collector.iNodeProperty
+    private postProcessOperations() {
+        for (const [resource, options] of this.operationByResource) {
+            const operation = {
+                displayName: 'Operation',
+                name: 'operation',
+                type: 'options',
+                noDataExpression: true,
+                displayOptions: {
+                    show: {
+                        resource: [resource],
+                    },
+                },
+                options: options,
+                default: '',
+            };
+            // @ts-ignore
+            this.addOperation(operation);
+        }
     }
 
-    private parseOperations() {
-        const collector = new OperationsCollector(this.logger, this.doc, this.addUriAfterOperation)
-        this.walker.walk(collector)
-        this.operations = collector.iNodeProperties
+    private addOption(resourceName: string, option: any) {
+        if (!this.operationByResource.has(resourceName)) {
+            this.operationByResource.set(resourceName, []);
+        }
+        const options = this.operationByResource.get(resourceName)!!;
+        if (lodash.find(options, {value: option.value})) {
+            throw new Error(`Duplicate operation '${option.value}' for resource '${resourceName}'`);
+        }
+
+        options.push(option);
     }
+
+    private addFields(fields: INodeProperties[]) {
+        this.fields.push(...fields);
+    }
+
+    private addOperation(operation: INodeProperties) {
+        this.operations.push(operation);
+    }
+
 }
