@@ -2,6 +2,7 @@ import {INodeProperties, NodePropertyTypes} from 'n8n-workflow/dist/Interfaces';
 import * as lodash from 'lodash';
 import {OpenAPIV3} from 'openapi-types';
 import {RefResolver} from "./RefResolver";
+import pino from 'pino';
 
 interface Action {
     uri: string;
@@ -33,6 +34,7 @@ function sessionFirst(a: any, b: any) {
 }
 
 export interface ParserConfig {
+    logger?: pino.Logger;
     addUriAfterOperation: boolean;
 }
 
@@ -42,19 +44,20 @@ export class Parser {
     public fields: INodeProperties[];
 
     private operationByResource: Map<string, any[]> = new Map();
-    private readonly doc: OpenAPIV3.Document;
     private refResolver: RefResolver;
+    private logger: pino.Logger
+    private readonly addUriAfterOperation: boolean;
 
-    constructor(
-        doc: any,
-        private config: ParserConfig = {
-            addUriAfterOperation: true,
-        },
-    ) {
+    private readonly doc: OpenAPIV3.Document;
+
+    constructor(doc: any, config?: ParserConfig) {
         this.doc = doc
         this.operations = [];
         this.fields = [];
         this.refResolver = new RefResolver(doc)
+
+        this.logger = config?.logger || pino()
+        this.addUriAfterOperation = config ? config.addUriAfterOperation : true
     }
 
     get properties(): INodeProperties[] {
@@ -128,7 +131,7 @@ export class Parser {
         };
         const fields = this.parseFields(resourceName, name, operation);
 
-        if (this.config.addUriAfterOperation) {
+        if (this.addUriAfterOperation) {
             const notice = {
                 displayName: `${method.toUpperCase()} ${uri}`,
                 name: 'operation',
@@ -328,13 +331,13 @@ export class Parser {
         }
         const content = requestBody.content['application/json'] || requestBody.content['application/json; charset=utf-8'];
         if (!content) {
-            // TODO: Add logs
+            this.logger.warn(`No 'application/json' content found for operation '${operationName}'`);
             return []
         }
         const requestBodySchema = content.schema;
         const requestSchema = this.resolveSchema(requestBodySchema);
         if (requestSchema.type != 'object') {
-            throw new Error(`Type '${requestSchema.type}' not supported`);
+            this.logger.warn(`Request body schema type '${requestSchema.type}' not supported for operation '${operationName}'`);
         }
         const properties = requestSchema.properties;
         const fields = [];
