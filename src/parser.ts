@@ -1,11 +1,9 @@
 import {INodeProperties} from 'n8n-workflow/dist/Interfaces';
 import * as lodash from 'lodash';
 import {OpenAPIV3} from 'openapi-types';
-import {RefResolver} from "./openapi/RefResolver";
 import pino from 'pino';
 import {OpenAPIWalker} from "./openapi/OpenAPIWalker";
 import {ResourcePropertiesCollector, toResource} from "./ResourcePropertiesCollector";
-import {SchemaExample} from "./openapi/SchemaExample";
 import {N8NINodeProperties} from "./SchemaToINodeProperties";
 
 interface Action {
@@ -50,8 +48,6 @@ export class Parser {
 
     // OpenAPI helpers
     private readonly walker: OpenAPIWalker;
-    private schemaExample: SchemaExample;
-    private refResolver: RefResolver;
     private n8nNodeProperties: N8NINodeProperties;
 
     constructor(doc: any, config?: ParserConfig) {
@@ -62,8 +58,6 @@ export class Parser {
         this.logger = config?.logger || pino()
         this.addUriAfterOperation = config ? config.addUriAfterOperation : true
         this.walker = new OpenAPIWalker(this.doc)
-        this.refResolver = new RefResolver(doc)
-        this.schemaExample = new SchemaExample(doc)
         this.n8nNodeProperties = new N8NINodeProperties(this.logger, doc)
     }
 

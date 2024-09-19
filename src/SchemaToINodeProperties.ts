@@ -8,7 +8,7 @@ import pino from "pino";
 type Schema = OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject;
 type FromSchemaNodeProperty = Pick<INodeProperties, 'type' | 'default' | 'description' | 'options'>;
 
-function n8nPropertyFrom(...sources: Partial<INodeProperties>[]): INodeProperties {
+function combineINodeProperties(...sources: Partial<INodeProperties>[]): INodeProperties {
     const obj = lodash.defaults({}, ...sources)
     if (!obj.required) {
         // n8n does want to have required: false|null|undefined
@@ -90,7 +90,7 @@ export class N8NINodeProperties {
             description: parameter.description,
             default: parameter.example,
         };
-        const field = n8nPropertyFrom(fieldParameterKeys, fieldSchemaKeys)
+        const field = combineINodeProperties(fieldParameterKeys, fieldSchemaKeys)
 
         const isQuery = parameter.in === 'query';
         if (isQuery) {
@@ -131,7 +131,7 @@ export class N8NINodeProperties {
             displayName: lodash.startCase(name),
             name: name,
         }
-        const field = n8nPropertyFrom(fieldParameterKeys, fieldSchemaKeys)
+        const field = combineINodeProperties(fieldParameterKeys, fieldSchemaKeys)
         return field
     }
 
@@ -159,7 +159,7 @@ export class N8NINodeProperties {
             const fieldDefaults: Partial<INodeProperties> = {
                 required: requestSchema.required && requestSchema.required?.includes(key),
             }
-            const field = n8nPropertyFrom(fieldDefaults, fieldPropertyKeys)
+            const field = combineINodeProperties(fieldDefaults, fieldPropertyKeys)
             if (field.type === 'json') {
                 field.routing = {
                     request: {
