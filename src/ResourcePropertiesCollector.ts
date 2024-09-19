@@ -19,13 +19,14 @@ interface TagObject {
 export class ResourcePropertiesCollector implements OpenAPIVisitor {
     private tags: Map<string, TagObject>;
     private tagsOrder = new Map<string, number>();
+    private logger: pino.Logger;
 
-    constructor(private logger: pino.Logger) {
+    constructor(logger: pino.Logger) {
         this.logger = logger.child({class: 'ResourcePropertiesCollector'});
         this.tags = new Map<string, TagObject>()
     }
 
-    get props(): INodeProperties {
+    get iNodeProperty(): INodeProperties {
         if (this.tags.size === 0) {
             throw new Error('No tags found in OpenAPI document')
         }

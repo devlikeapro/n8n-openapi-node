@@ -183,7 +183,7 @@ export class Parser {
     private parseResources() {
         const collector = new ResourcePropertiesCollector(this.logger)
         this.walker.walk(collector)
-        this.resourceNode = collector.props
+        this.resourceNode = collector.iNodeProperty
     }
 
     private parseOperations() {
