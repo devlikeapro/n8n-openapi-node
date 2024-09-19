@@ -18,7 +18,7 @@ export interface ParserConfig {
     ResourcePropertiesCollector?: typeof ResourcePropertiesCollectorImpl
 }
 
-export class Parser {
+export class OpenAPIN8NParser {
     private readonly doc: OpenAPIV3.Document;
     private readonly logger: pino.Logger
     private readonly walker: OpenAPIWalker;

@@ -1,13 +1,13 @@
-import {Parser} from "../src/parser";
+import {OpenAPIN8NParser} from "../src/OpenAPIN8NParser";
 
 test('petstore.json', async () => {
     const doc = require('./examples/petstore.json');
-    const parser = new Parser(doc);
+    const parser = new OpenAPIN8NParser(doc);
     parser.process()
 })
 
 test('chatwoot.json', () => {
     const doc = require('./examples/chatwoot.json');
-    const parser = new Parser(doc);
+    const parser = new OpenAPIN8NParser(doc);
     parser.process()
 })

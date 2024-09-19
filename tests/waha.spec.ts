@@ -1,5 +1,5 @@
-import {Parser, ParserConfig} from "../src/parser";
-import {BaseOperationsCollector, OperationsCollector} from "../src/OperationsCollector";
+import {OpenAPIN8NParser, ParserConfig} from "../src/OpenAPIN8NParser";
+import {OperationsCollector} from "../src/OperationsCollector";
 import {OpenAPIV3} from "openapi-types";
 import {OperationContext} from "../src/openapi/OpenAPIVisitor";
 
@@ -13,19 +13,12 @@ function sessionFirst(a: any, b: any) {
     return 0;
 }
 
-function SessionFirstMixin<TBase extends new (...args: any[]) => BaseOperationsCollector>(Base: TBase) {
-    return class extends Base {
-        parseFields(operation: OpenAPIV3.OperationObject, context: OperationContext) {
-            const fields = super.parseFields(operation, context);
-            fields.sort(sessionFirst);
-            return fields;
-        }
+export class WAHAOperationsCollector extends OperationsCollector {
+    parseFields(operation: OpenAPIV3.OperationObject, context: OperationContext) {
+        const fields = super.parseFields(operation, context);
+        fields.sort(sessionFirst);
+        return fields;
     }
-}
-
-
-export class WAHAOperationsCollector
-    extends SessionFirstMixin(OperationsCollector) {
 }
 
 test('waha.json', () => {
@@ -33,7 +26,7 @@ test('waha.json', () => {
     const config: ParserConfig = {
         OperationsCollector: WAHAOperationsCollector,
     }
-    const parser = new Parser(doc, config);
+    const parser = new OpenAPIN8NParser(doc, config);
     const result = parser.process()
 
     const expected = [

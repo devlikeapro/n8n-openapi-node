@@ -151,45 +151,27 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
     }
 }
 
-/**
- * Skip deprecated operations
- * @param Base
- * @constructor
- */
-export function SkipDeprecatedMixin<TBase extends new (...args: any[]) => BaseOperationsCollector>(Base: TBase) {
-    return class extends Base {
-        visitOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
-            if (operation.deprecated) {
-                return;
-            }
-            super.visitOperation(operation, context);
+export class OperationsCollector extends BaseOperationsCollector {
+    visitOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
+        if (operation.deprecated) {
+            return;
         }
+        super.visitOperation(operation, context);
     }
-}
 
-/**
- * Add a notice field to the operation about WHAT request is being made
- */
-export function NoticeForOperationMixin<TBase extends new (...args: any[]) => BaseOperationsCollector>(Base: TBase) {
-    return class extends Base {
-        protected parseOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
-            const result = super.parseOperation(operation, context)
-            const notice: INodeProperties = {
-                displayName: `${context.method.toUpperCase()} ${context.pattern}`,
-                name: 'operation',
-                type: 'notice',
-                typeOptions: {
-                    theme: 'info',
-                },
-                default: '',
-            };
-            result.fields.unshift(notice);
-            return result
-        }
+    protected parseOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
+        const result = super.parseOperation(operation, context)
+        const notice: INodeProperties = {
+            displayName: `${context.method.toUpperCase()} ${context.pattern}`,
+            name: 'operation',
+            type: 'notice',
+            typeOptions: {
+                theme: 'info',
+            },
+            default: '',
+        };
+        result.fields.unshift(notice);
+        return result
     }
-}
-
-export class OperationsCollector
-    extends SkipDeprecatedMixin(NoticeForOperationMixin(BaseOperationsCollector)) {
 }
 

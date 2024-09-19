@@ -1,4 +1,4 @@
-import {Override, Parser} from './parser';
+import {OpenAPIN8NParser, Override} from './OpenAPIN8NParser';
 import {BaseOperationsCollector} from "./OperationsCollector";
 
 test('query param', () => {
@@ -24,7 +24,7 @@ test('query param', () => {
         },
     };
 
-    const parser = new Parser({paths});
+    const parser = new OpenAPIN8NParser({paths});
     const result = parser.process()
 
     expect(result).toEqual([
@@ -130,7 +130,7 @@ test('path param', () => {
         },
     };
 
-    const parser = new Parser({paths}, {OperationsCollector: BaseOperationsCollector});
+    const parser = new OpenAPIN8NParser({paths}, {OperationsCollector: BaseOperationsCollector});
     const result = parser.process()
     expect(result).toEqual([
         {
@@ -245,7 +245,7 @@ test('request body', () => {
         },
     };
 
-    const parser = new Parser({paths, components}, {OperationsCollector: BaseOperationsCollector});
+    const parser = new OpenAPIN8NParser({paths, components}, {OperationsCollector: BaseOperationsCollector});
     const result = parser.process()
 
     expect(result).toEqual([
@@ -384,7 +384,7 @@ test('enum schema', () => {
     };
 
     // @ts-ignore
-    const parser = new Parser({paths}, {OperationsCollector: BaseOperationsCollector});
+    const parser = new OpenAPIN8NParser({paths}, {OperationsCollector: BaseOperationsCollector});
     const result = parser.process()
 
     expect(result).toEqual([
@@ -486,7 +486,7 @@ test('body "array" param', () => {
             },
         };
 
-    const parser = new Parser({paths}, {OperationsCollector: BaseOperationsCollector});
+    const parser = new OpenAPIN8NParser({paths}, {OperationsCollector: BaseOperationsCollector});
         const result = parser.process()
 
     const expected: any[] = [
@@ -629,7 +629,7 @@ test('test overrides', () => {
         },
     ];
 
-    const parser = new Parser({paths, components}, {
+    const parser = new OpenAPIN8NParser({paths, components}, {
         overrides: customDefaults,
         OperationsCollector: BaseOperationsCollector
     });
