@@ -2,8 +2,8 @@ import {INodeProperties} from 'n8n-workflow/dist/Interfaces';
 import {OpenAPIV3} from 'openapi-types';
 import pino from 'pino';
 import {OpenAPIWalker} from "./openapi/OpenAPIWalker";
-import {ResourcePropertiesCollector} from "./ResourcePropertiesCollector";
-import {BaseOperationsCollector, OperationsCollector} from "./OperationsCollector";
+import {ResourcePropertiesCollector as ResourcePropertiesCollectorImpl} from "./ResourcePropertiesCollector";
+import {BaseOperationsCollector, OperationsCollector as OperationsCollectorImpl} from "./OperationsCollector";
 import * as lodash from "lodash";
 
 export interface Override {
@@ -14,8 +14,8 @@ export interface Override {
 export interface ParserConfig {
     logger?: pino.Logger;
     overrides?: Override[];
-    OperationsCollectorClass?: typeof BaseOperationsCollector,
-    ResourcePropertiesCollectorClass?: typeof ResourcePropertiesCollector
+    OperationsCollector?: typeof BaseOperationsCollector,
+    ResourcePropertiesCollector?: typeof ResourcePropertiesCollectorImpl
 }
 
 export class Parser {
@@ -25,24 +25,24 @@ export class Parser {
     private readonly overrides: Override[]
 
     // DI
-    private readonly OperationsCollectorClass: typeof BaseOperationsCollector;
-    private readonly ResourcePropertiesCollectorClass: typeof ResourcePropertiesCollector;
+    private readonly OperationsCollector: typeof BaseOperationsCollector;
+    private readonly ResourcePropertiesCollector: typeof ResourcePropertiesCollectorImpl;
 
     constructor(doc: any, config?: ParserConfig) {
         this.doc = doc
         this.logger = config?.logger || pino()
         this.walker = new OpenAPIWalker(this.doc)
-        this.OperationsCollectorClass = config?.OperationsCollectorClass ? config.OperationsCollectorClass : OperationsCollector
-        this.ResourcePropertiesCollectorClass = config?.ResourcePropertiesCollectorClass ? config.ResourcePropertiesCollectorClass : ResourcePropertiesCollector
+        this.OperationsCollector = config?.OperationsCollector ? config.OperationsCollector : OperationsCollectorImpl
+        this.ResourcePropertiesCollector = config?.ResourcePropertiesCollector ? config.ResourcePropertiesCollector : ResourcePropertiesCollectorImpl
         this.overrides = config?.overrides || []
     }
 
     process(): INodeProperties[] {
-        const resourcePropertiesCollector = new this.ResourcePropertiesCollectorClass()
+        const resourcePropertiesCollector = new this.ResourcePropertiesCollector()
         this.walker.walk(resourcePropertiesCollector)
         const resourceNode = resourcePropertiesCollector.iNodeProperty
 
-        const operationsCollector = new this.OperationsCollectorClass(this.logger, this.doc)
+        const operationsCollector = new this.OperationsCollector(this.logger, this.doc)
         this.walker.walk(operationsCollector)
         const operations = operationsCollector.operations
         const fields = operationsCollector.fields

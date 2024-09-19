@@ -13,16 +13,6 @@ function replaceToParameter(uri: string): string {
     return uri.replace(/{([^}]*)}/g, '{{$parameter["$1"]}}');
 }
 
-function sessionFirst(a: any, b: any) {
-    if (a.name === 'session') {
-        return -1;
-    }
-    if (b.name === 'session') {
-        return 1;
-    }
-    return 0;
-}
-
 export class BaseOperationsCollector implements OpenAPIVisitor {
     public readonly _fields: INodeProperties[]
     private optionsByResource: OptionsByResourceMap = new OptionsByResourceMap()
@@ -118,10 +108,6 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
             }
             fields.push(notice)
         }
-
-        // sort fields, so "session" always top
-        fields.sort(sessionFirst);
-
         return fields;
     }
 
@@ -170,7 +156,7 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
  * @param Base
  * @constructor
  */
-function SkipDeprecatedMixin<TBase extends new (...args: any[]) => BaseOperationsCollector>(Base: TBase) {
+export function SkipDeprecatedMixin<TBase extends new (...args: any[]) => BaseOperationsCollector>(Base: TBase) {
     return class extends Base {
         visitOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
             if (operation.deprecated) {
@@ -184,7 +170,7 @@ function SkipDeprecatedMixin<TBase extends new (...args: any[]) => BaseOperation
 /**
  * Add a notice field to the operation about WHAT request is being made
  */
-function NoticeForOperationMixin<TBase extends new (...args: any[]) => BaseOperationsCollector>(Base: TBase) {
+export function NoticeForOperationMixin<TBase extends new (...args: any[]) => BaseOperationsCollector>(Base: TBase) {
     return class extends Base {
         protected parseOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
             const result = super.parseOperation(operation, context)
