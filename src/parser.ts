@@ -30,7 +30,7 @@ export class Parser {
     }
 
     process(): INodeProperties[] {
-        const resourcePropertiesCollector = new this.ResourcePropertiesCollectorClass(this.logger)
+        const resourcePropertiesCollector = new this.ResourcePropertiesCollectorClass()
         this.walker.walk(resourcePropertiesCollector)
         const resourceNode = resourcePropertiesCollector.iNodeProperty
 

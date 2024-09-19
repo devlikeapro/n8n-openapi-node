@@ -1,5 +1,4 @@
 import {OpenAPIVisitor, OperationContext} from "./openapi/OpenAPIVisitor";
-import pino from "pino";
 import {OpenAPIV3} from "openapi-types";
 import {INodeProperties} from "n8n-workflow/dist/Interfaces";
 import {toResourceName} from "./n8n/utils";
@@ -15,10 +14,8 @@ interface TagObject {
 export class ResourcePropertiesCollector implements OpenAPIVisitor {
     private tags: Map<string, TagObject>;
     private tagsOrder = new Map<string, number>();
-    private logger: pino.Logger;
 
-    constructor(logger: pino.Logger) {
-        this.logger = logger
+    constructor() {
         this.tags = new Map<string, TagObject>()
     }
 
@@ -55,7 +52,6 @@ export class ResourcePropertiesCollector implements OpenAPIVisitor {
     visitOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
         const tags = operation.tags;
         if (!tags || tags.length === 0) {
-            this.logger.warn(`No tags found for operation '${operation}'`);
             return;
         }
         // get first tag
