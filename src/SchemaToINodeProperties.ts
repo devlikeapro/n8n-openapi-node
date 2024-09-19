@@ -3,7 +3,6 @@ import {INodeProperties, NodePropertyTypes} from "n8n-workflow/dist/Interfaces";
 import {RefResolver} from "./openapi/RefResolver";
 import * as lodash from "lodash";
 import {SchemaExample} from "./openapi/SchemaExample";
-import pino from "pino";
 
 type Schema = OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject;
 type FromSchemaNodeProperty = Pick<INodeProperties, 'type' | 'default' | 'description' | 'options'>;
@@ -22,12 +21,10 @@ function combineINodeProperties(...sources: Partial<INodeProperties>[]): INodePr
  * The rest represent as JSON string
  */
 export class N8NINodeProperties {
-    private logger: pino.Logger;
     private refResolver: RefResolver;
     private schemaExample: SchemaExample;
 
-    constructor(logger: pino.Logger, doc: any) {
-        this.logger = logger
+    constructor(doc: any) {
         this.refResolver = new RefResolver(doc)
         this.schemaExample = new SchemaExample(doc)
     }
@@ -142,13 +139,12 @@ export class N8NINodeProperties {
         body = this.refResolver.resolve<OpenAPIV3.RequestBodyObject>(body)
         const content = body.content['application/json'] || body.content['application/json; charset=utf-8'];
         if (!content) {
-            this.logger.warn(`No 'application/json' content found`);
-            return []
+            throw new Error(`No 'application/json' content found`);
         }
         const requestBodySchema = content.schema!!;
         const schema = this.refResolver.resolve<OpenAPIV3.SchemaObject>(requestBodySchema)
         if (schema.type != 'object' && schema.type != 'array') {
-            this.logger.warn(`Request body schema type '${schema.type}' not supported`);
+            throw new Error(`Request body schema type '${schema.type}' not supported`);
         }
 
         const fields = [];

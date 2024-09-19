@@ -35,7 +35,7 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
     constructor(logger: pino.Logger, doc: any) {
         this.logger = logger.child({})
         this._fields = []
-        this.n8nNodeProperties = new N8NINodeProperties(this.logger, doc)
+        this.n8nNodeProperties = new N8NINodeProperties(doc)
     }
 
     get operations(): INodeProperties[] {
@@ -75,7 +75,15 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
                 operationId: operation.operationId
             }
         }
-        this.logger.setBindings(bindings)
+        try {
+            this._visitOperation(operation, context)
+        } catch (error) {
+            // @ts-ignore
+            this.logger.error(bindings as any, error?.message)
+        }
+    }
+
+    _visitOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
         const tags = operation.tags;
         if (!tags || tags.length === 0) {
             throw new Error(`No tags found for operation '${operation}'`);
@@ -86,6 +94,7 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
         this.addDisplayOption(fields, resourceName, operationName)
         this.optionsByResource.add(resourceName, option);
         this._fields.push(...fields)
+
     }
 
     protected parseOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
