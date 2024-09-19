@@ -24,29 +24,27 @@ function sessionFirst(a: any, b: any) {
 }
 
 export class OperationsCollector implements OpenAPIVisitor {
-    private logger: pino.Logger;
+    public readonly fields: INodeProperties[]
     private operationByResource: Map<string, any[]> = new Map();
-
-    private readonly fields: INodeProperties[]
-    private readonly operations: INodeProperties[];
+    private readonly logger: pino.Logger;
+    private readonly _operations: INodeProperties[];
     private n8nNodeProperties: N8NINodeProperties;
 
     constructor(logger: pino.Logger, doc: any, private addUriAfterOperation: boolean) {
         this.logger = logger.child({class: 'OperationsCollector'});
         this.fields = []
-        this.operations = []
+        this._operations = []
         this.n8nNodeProperties = new N8NINodeProperties(this.logger, doc)
     }
 
-    get iNodeProperties(): INodeProperties[] {
-        if (this.operations.length === 0) {
+    get operations() {
+        if (this._operations.length === 0) {
             this.postProcessOperations()
         }
-        if (this.operations.length === 0) {
+        if (this._operations.length === 0) {
             throw new Error('No operations found in OpenAPI document')
         }
-
-        return [...this.operations, ...this.fields]
+        return [...this._operations]
     }
 
     visitOperation(pattern: string,
@@ -179,7 +177,6 @@ export class OperationsCollector implements OpenAPIVisitor {
     }
 
     private addOperation(operation: INodeProperties) {
-        this.operations.push(operation);
+        this._operations.push(operation);
     }
-
 }
