@@ -125,7 +125,7 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
         return fields;
     }
 
-    addDisplayOption(fields: INodeProperties[], resource: string, operation: string) {
+    private addDisplayOption(fields: INodeProperties[], resource: string, operation: string) {
         const displayOptions = {
             show: {
                 resource: [resource],

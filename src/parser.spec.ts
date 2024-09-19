@@ -1,4 +1,4 @@
-import {Parser} from './parser';
+import {Override, Parser} from './parser';
 import {BaseOperationsCollector} from "./OperationsCollector";
 
 test('query param', () => {
@@ -557,3 +557,188 @@ test('body "array" param', () => {
         expect(result).toEqual(expected)
     }
 )
+
+test('test overrides', () => {
+    const paths = {
+        '/api/entities': {
+            post: {
+                operationId: 'EntityController_create',
+                summary: 'Create entity',
+                requestBody: {
+                    content: {
+                        'application/json': {
+                            schema: {
+                                $ref: '#/components/schemas/Entity',
+                            },
+                        },
+                    },
+                },
+                tags: ['🖥️ Entity'],
+            },
+        },
+    };
+    const components = {
+        schemas: {
+            Entity: {
+                type: 'object',
+                properties: {
+                    name: {
+                        type: 'string',
+                        maxLength: 54,
+                        example: 'default',
+                        description: 'Entity name',
+                    },
+                    start: {
+                        type: 'boolean',
+                        description: 'Boolean flag description',
+                        example: true,
+                        default: true,
+                    },
+                    config: {
+                        $ref: '#/components/schemas/EntityConfig',
+                    },
+                },
+                required: ['name'],
+            },
+            EntityConfig: {
+                type: 'object',
+                properties: {
+                    foo: {
+                        type: 'string',
+                        example: 'bar',
+                    },
+                },
+            },
+        },
+    };
+
+    const customDefaults: Override[] = [
+        {
+            find: {
+                name: 'config',
+                displayOptions: {
+                    show: {
+                        resource: ['Entity'],
+                        operation: ['Create'],
+                    },
+                },
+            },
+            replace: {
+                default: '={{ $json.config }}',
+            },
+        },
+    ];
+
+    const parser = new Parser({paths, components}, {
+        overrides: customDefaults,
+        OperationsCollectorClass: BaseOperationsCollector
+    });
+    const result = parser.process()
+
+    expect(result).toEqual([
+        {
+            "default": "",
+            "displayName": "Resource",
+            "name": "resource",
+            "noDataExpression": true,
+            "options": [
+                {
+                    "description": "",
+                    "name": "🖥️ Entity",
+                    "value": "Entity"
+                }
+            ],
+            "type": "options"
+        },
+        {
+            displayName: 'Operation',
+            name: 'operation',
+            type: 'options',
+            noDataExpression: true,
+            displayOptions: {
+                show: {
+                    resource: ['Entity'],
+                },
+            },
+            options: [
+                {
+                    name: 'Create',
+                    value: 'Create',
+                    action: 'Create entity',
+                    description: 'Create entity',
+                    routing: {
+                        request: {
+                            method: 'POST',
+                            url: '=/api/entities',
+                        },
+                    },
+                },
+            ],
+            // eslint-disable-next-line
+            default: '',
+        },
+        {
+            displayName: 'Name',
+            name: 'name',
+            type: 'string',
+            default: 'default',
+            description: 'Entity name',
+            required: true,
+            displayOptions: {
+                show: {
+                    resource: ['Entity'],
+                    operation: ['Create'],
+                },
+            },
+            routing: {
+                request: {
+                    body: {
+                        name: '={{ $value }}',
+                    },
+                },
+            },
+        },
+        {
+            displayName: 'Start',
+            name: 'start',
+            type: 'boolean',
+            default: true,
+            required: undefined,
+            // eslint-disable-next-line n8n-nodes-base/node-param-description-boolean-without-whether
+            description: 'Boolean flag description',
+            displayOptions: {
+                show: {
+                    resource: ['Entity'],
+                    operation: ['Create'],
+                },
+            },
+            routing: {
+                request: {
+                    body: {
+                        start: '={{ $value }}',
+                    },
+                },
+            },
+        },
+        {
+            displayName: 'Config',
+            name: 'config',
+            type: 'json',
+            displayOptions: {
+                show: {
+                    resource: ['Entity'],
+                    operation: ['Create'],
+                },
+            },
+            default: "={{ $json.config }}",
+            required: undefined,
+            routing: {
+                request: {
+                    body: {
+                        config: '={{ JSON.parse($value) }}',
+                    },
+                },
+            },
+        },
+    ]);
+});
