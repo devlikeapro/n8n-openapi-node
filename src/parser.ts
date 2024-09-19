@@ -104,8 +104,11 @@ export class Parser {
         uri: string,
         method: string,
     ) {
-        // const operationId = operation.operationId!!.split('_').slice(1).join('_');
-        const operationId = operation.operationId
+        let operationId: string = operation.operationId!!.split('_').slice(1).join('_');
+        if (!operationId) {
+            operationId = operation.operationId as string
+        }
+
         const name = lodash.startCase(operationId);
         const description = operation.description || operation.summary || '';
         const option = {
