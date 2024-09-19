@@ -6,6 +6,7 @@ import pino from 'pino';
 import {OpenAPIWalker} from "./openapi/OpenAPIWalker";
 import {ResourcePropertiesCollector, toResource} from "./ResourcePropertiesCollector";
 import {SchemaExample} from "./openapi/SchemaExample";
+import {N8NINodeProperties} from "./SchemaToINodeProperties";
 
 interface Action {
     uri: string;
@@ -51,6 +52,7 @@ export class Parser {
     private readonly walker: OpenAPIWalker;
     private schemaExample: SchemaExample;
     private refResolver: RefResolver;
+    private n8nNodeProperties: N8NINodeProperties;
 
     constructor(doc: any, config?: ParserConfig) {
         this.doc = doc
@@ -62,6 +64,7 @@ export class Parser {
         this.walker = new OpenAPIWalker(this.doc)
         this.refResolver = new RefResolver(doc)
         this.schemaExample = new SchemaExample(doc)
+        this.n8nNodeProperties = new N8NINodeProperties(doc)
     }
 
     get properties(): INodeProperties[] {
@@ -177,7 +180,7 @@ export class Parser {
         return fields;
     }
 
-    parseResources() {
+    private parseResources() {
         const collector = new ResourcePropertiesCollector(this.logger)
         this.walker.walk(collector)
         this.resourceNode = collector.props
@@ -189,16 +192,12 @@ export class Parser {
         }
         const fields = [];
         for (const parameter of parameters) {
-            const field = this.parseParam(parameter, resourceName, operationName);
-            const isQuery = parameter.in === 'query';
-            if (isQuery) {
-                field.routing = {
-                    request: {
-                        qs: {
-                            [parameter.name]: '={{ $value }}',
-                        },
-                    },
-                };
+            const field = this.n8nNodeProperties.fromParameter(parameter)
+            field.displayOptions = {
+                show: {
+                    resource: [resourceName],
+                    operation: [operationName],
+                },
             }
             fields.push(field);
         }
@@ -291,7 +290,7 @@ export class Parser {
             return []
         }
         const requestBodySchema = content.schema;
-        const requestSchema = this.resolveSchema(requestBodySchema);
+        const requestSchema = this.refResolver.resolve(requestBodySchema)
         if (requestSchema.type != 'object') {
             this.logger.warn(`Request body schema type '${requestSchema.type}' not supported for operation '${operationName}'`);
         }
@@ -330,10 +329,6 @@ export class Parser {
             fields.push(field);
         }
         return fields;
-    }
-
-    private resolveSchema(schema: any) {
-        return this.refResolver.resolve(schema)
     }
 
     private parseOperations() {
