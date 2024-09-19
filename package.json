@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Create Your n8n Community Node from OpenAPI (Swagger) spec!",
   "main": "dist/src/index.js",
+  "module": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "scripts": {
     "build": "tsc",
@@ -23,7 +24,8 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/src/index.js"
+      "import": "./dist/src/index.js",
+      "require": "./dist/src/index.js"
     }
   },
   "files": [
