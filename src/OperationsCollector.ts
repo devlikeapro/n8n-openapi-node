@@ -71,7 +71,9 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
             this._visitOperation(operation, context)
         } catch (error) {
             // @ts-ignore
-            this.logger.warn(bindings as any, error?.message)
+            const data = {...this.bindings, error: `${error}`}
+            // @ts-ignore
+            this.logger.warn(data, 'Failed to parse operation')
         }
     }
 
@@ -97,8 +99,9 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
             const bodyFields = this.n8nNodeProperties.fromRequestBody(operation.requestBody)
             fields.push(...bodyFields);
         } catch (error) {
+            const data = {...this.bindings, error: `${error}`}
             // @ts-ignore
-            this.logger.warn(this.bindings, error?.message)
+            this.logger.warn(data, 'Failed to parse request body')
             const msg = "There's no body available for request, kindly use HTTP Request node to send body"
             const notice: INodeProperties = {
                 displayName: `${context.method.toUpperCase()} ${context.pattern}<br/><br/>${msg}`,

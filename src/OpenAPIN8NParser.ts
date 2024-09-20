@@ -30,7 +30,7 @@ export class OpenAPIN8NParser {
 
     constructor(doc: any, config?: ParserConfig) {
         this.doc = doc
-        this.logger = config?.logger || pino()
+        this.logger = config?.logger || pino({transport: {target: 'pino-pretty'}})
         this.walker = new OpenAPIWalker(this.doc)
         this.OperationsCollector = config?.OperationsCollector ? config.OperationsCollector : OperationsCollectorImpl
         this.ResourcePropertiesCollector = config?.ResourcePropertiesCollector ? config.ResourcePropertiesCollector : ResourcePropertiesCollectorImpl
