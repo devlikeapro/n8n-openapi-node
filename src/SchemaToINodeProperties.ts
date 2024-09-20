@@ -163,7 +163,7 @@ export class N8NINodeProperties {
         }
         const requestBodySchema = content.schema!!;
         const schema = this.refResolver.resolve<OpenAPIV3.SchemaObject>(requestBodySchema)
-        if (schema.type != 'object' && schema.type != 'array') {
+        if (!schema.properties && schema.type != 'object' && schema.type != 'array') {
             throw new Error(`Request body schema type '${schema.type}' not supported`);
         }
 
