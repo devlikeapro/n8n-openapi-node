@@ -938,3 +938,120 @@ test('multiple tags', () => {
         ]
     );
 });
+
+test('no tags - default tag', () => {
+    const paths = {
+        '/api/entities': {
+            get: {
+                operationId: 'EntityController_list',
+                summary: 'List all entities',
+                parameters: [
+                    {
+                        name: 'all',
+                        required: false,
+                        in: 'query',
+                        example: false,
+                        description: 'Boolean flag description',
+                        schema: {
+                            type: 'boolean',
+                        },
+                    },
+                ],
+                tags: [],
+            },
+        },
+    };
+
+    const parser = new N8NPropertiesBuilder({paths});
+    const result = parser.build()
+
+    expect(result).toEqual(
+        [
+            {
+                "default": "",
+                "displayName": "Resource",
+                "name": "resource",
+                "noDataExpression": true,
+                "options": [
+                    {
+                        "description": "",
+                        "name": "Default",
+                        "value": "Default"
+                    }
+                ],
+                "type": "options"
+            },
+            {
+                "default": "",
+                "displayName": "Operation",
+                "displayOptions": {
+                    "show": {
+                        "resource": [
+                            "Default"
+                        ]
+                    }
+                },
+                "name": "operation",
+                "noDataExpression": true,
+                "options": [
+                    {
+                        "action": "List all entities",
+                        "description": "List all entities",
+                        "name": "List",
+                        "routing": {
+                            "request": {
+                                "method": "GET",
+                                "url": "=/api/entities"
+                            }
+                        },
+                        "value": "List"
+                    }
+                ],
+                "type": "options"
+            },
+            {
+                "default": "",
+                "displayName": "GET /api/entities",
+                "displayOptions": {
+                    "show": {
+                        "operation": [
+                            "List"
+                        ],
+                        "resource": [
+                            "Default"
+                        ]
+                    }
+                },
+                "name": "operation",
+                "type": "notice",
+                "typeOptions": {
+                    "theme": "info"
+                }
+            },
+            {
+                "default": false,
+                "description": "Boolean flag description",
+                "displayName": "All",
+                "displayOptions": {
+                    "show": {
+                        "operation": [
+                            "List"
+                        ],
+                        "resource": [
+                            "Default"
+                        ]
+                    }
+                },
+                "name": "all",
+                "routing": {
+                    "request": {
+                        "qs": {
+                            "all": "={{ $value }}"
+                        }
+                    }
+                },
+                "type": "boolean"
+            }
+        ]
+    );
+});

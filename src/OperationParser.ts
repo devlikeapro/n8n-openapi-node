@@ -15,11 +15,7 @@ export interface IOperationParser {
 
 export class N8NOperationParser implements IOperationParser {
     getResources(operation: OpenAPIV3.OperationObject, context: OperationContext): string[] {
-        const tags = operation.tags;
-        if (!tags || tags.length === 0) {
-            // TODO: Add "default" tag
-            throw new Error(`No tags found for operation '${operation}'`);
-        }
+        const tags = operation.tags as string[]
         return tags.map(toResourceName)
     }
 

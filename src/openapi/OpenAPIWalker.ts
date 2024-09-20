@@ -44,6 +44,9 @@ export class OpenAPIWalker {
                 if (!HttpMethods.includes(method)) {
                     continue;
                 }
+                if (!operation.tags || operation.tags.length === 0) {
+                    operation.tags = ['default']
+                }
                 if (operation && visitor.visitOperation) {
                     const context = {pattern: path, path: pathItem, method: method as OpenAPIV3.HttpMethods};
                     visitor.visitOperation(operation, context);

@@ -45,15 +45,19 @@ export class ResourcePropertiesCollector implements OpenAPIVisitor {
         tags.sort((a, b) => {
             return this.tagsOrder.get(a.name,)! - this.tagsOrder.get(b.name)!;
         })
+        // put "default" at the end if not present explicitly in 'tags"
+        if (!this.tagsOrder.has('default')) {
+            const defaultTag = tags.find((tag) => tag.name === 'default')
+            if (defaultTag) {
+                tags.splice(tags.indexOf(defaultTag), 1)
+                tags.push(defaultTag)
+            }
+        }
         return tags;
     }
 
     visitOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
-        let tags = operation.tags
-        if (!tags || tags.length === 0) {
-            // TODO: add 'default' at the end
-            return;
-        }
+        let tags = operation.tags as string[]
         tags.forEach((tag) => this.addTagByName(tag))
     }
 
