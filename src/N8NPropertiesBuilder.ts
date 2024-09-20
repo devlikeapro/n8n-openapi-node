@@ -11,7 +11,7 @@ export interface Override {
     replace: any;
 }
 
-export interface ParserConfig {
+export interface N8NPropertiesBuilderConfig {
     logger?: pino.Logger;
     overrides?: Override[];
     OperationsCollector?: typeof BaseOperationsCollector,
@@ -28,7 +28,7 @@ export class N8NPropertiesBuilder {
     private readonly OperationsCollector: typeof BaseOperationsCollector;
     private readonly ResourcePropertiesCollector: typeof ResourcePropertiesCollectorImpl;
 
-    constructor(doc: any, config?: ParserConfig) {
+    constructor(doc: any, config?: N8NPropertiesBuilderConfig) {
         this.doc = doc
         this.logger = config?.logger || pino({transport: {target: 'pino-pretty'}})
         this.walker = new OpenAPIWalker(this.doc)

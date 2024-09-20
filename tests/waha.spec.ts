@@ -1,4 +1,4 @@
-import {N8NPropertiesBuilder, ParserConfig} from "../src/N8NPropertiesBuilder";
+import {N8NPropertiesBuilder, N8NPropertiesBuilderConfig} from "../src/N8NPropertiesBuilder";
 import {OperationsCollector} from "../src/OperationsCollector";
 import {OpenAPIV3} from "openapi-types";
 import {OperationContext} from "../src/openapi/OpenAPIVisitor";
@@ -23,7 +23,7 @@ export class WAHAOperationsCollector extends OperationsCollector {
 
 test('waha.json', () => {
     const doc = require('./examples/waha.json');
-    const config: ParserConfig = {
+    const config: N8NPropertiesBuilderConfig = {
         OperationsCollector: WAHAOperationsCollector,
     }
     const parser = new N8NPropertiesBuilder(doc, config);

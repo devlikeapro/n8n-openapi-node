@@ -1,4 +1,5 @@
 import {OpenAPIVisitor, OperationContext} from "./openapi/OpenAPIVisitor";
+import * as lodash from "lodash";
 import {OpenAPIV3} from "openapi-types";
 import {INodeProperties} from "n8n-workflow";
 import {toResourceName} from "./n8n/utils";
@@ -26,7 +27,7 @@ export class ResourcePropertiesCollector implements OpenAPIVisitor {
         const tags = this.sortedTags
         const options = tags.map((tag) => {
             return {
-                name: tag.name,
+                name: lodash.startCase(tag.name),
                 value: toResourceName(tag.name),
                 description: tag.description,
             };
