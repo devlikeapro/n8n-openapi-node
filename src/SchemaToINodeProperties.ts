@@ -98,20 +98,30 @@ export class N8NINodeProperties {
         };
         const field = combineINodeProperties(fieldParameterKeys, fieldSchemaKeys)
 
-        const isQuery = parameter.in === 'query';
-        if (isQuery) {
-            field.routing = {
-                request: {
-                    qs: {
-                        [parameter.name]: '={{ $value }}',
+        switch (parameter.in) {
+            case "query":
+                field.routing = {
+                    request: {
+                        qs: {
+                            [parameter.name]: '={{ $value }}',
+                        },
                     },
-                },
-            };
-        }
-
-        const isPath = parameter.in === 'path';
-        if (isPath) {
-            field.required = true
+                };
+                break;
+            case "path" :
+                field.required = true
+                break
+            case "header":
+                field.routing = {
+                    request: {
+                        headers: {
+                            [parameter.name]: '={{ $value }}',
+                        },
+                    },
+                };
+                break
+            default:
+                throw new Error(`Unknown parameter location '${parameter.in}'`);
         }
         if (!field.required) {
             delete field.required
