@@ -11,5 +11,4 @@ export class OptionsByResourceMap extends Map<string, any[]> {
         }
         options.push(option);
     }
-
 }
