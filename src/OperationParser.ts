@@ -4,7 +4,7 @@ import {OperationContext} from "./openapi/OpenAPIVisitor";
 import {toResourceName} from "./n8n/utils";
 
 export interface IOperationParser {
-    getResourceName(operation: OpenAPIV3.OperationObject, context: OperationContext): string
+    getResources(operation: OpenAPIV3.OperationObject, context: OperationContext): string[]
 
     getOperationName(operation: OpenAPIV3.OperationObject, context: OperationContext): string
 
@@ -14,12 +14,13 @@ export interface IOperationParser {
 }
 
 export class N8NOperationParser implements IOperationParser {
-    getResourceName(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
+    getResources(operation: OpenAPIV3.OperationObject, context: OperationContext): string[] {
         const tags = operation.tags;
         if (!tags || tags.length === 0) {
+            // TODO: Add "default" tag
             throw new Error(`No tags found for operation '${operation}'`);
         }
-        return toResourceName(tags[0]);
+        return tags.map(toResourceName)
     }
 
     getOperationName(operation: OpenAPIV3.OperationObject, context: OperationContext): string {

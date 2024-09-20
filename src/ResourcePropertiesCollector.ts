@@ -11,6 +11,7 @@ interface TagObject {
 
 /**
  * Collects resource properties from OpenAPI document
+ * Resource is basically tags from OpenAPI spec
  */
 export class ResourcePropertiesCollector implements OpenAPIVisitor {
     private tags: Map<string, TagObject>;
@@ -21,9 +22,6 @@ export class ResourcePropertiesCollector implements OpenAPIVisitor {
     }
 
     get iNodeProperty(): INodeProperties {
-        if (this.tags.size === 0) {
-            throw new Error('No tags found in OpenAPI document')
-        }
         const tags = this.sortedTags
         const options = tags.map((tag) => {
             return {
@@ -51,13 +49,15 @@ export class ResourcePropertiesCollector implements OpenAPIVisitor {
     }
 
     visitOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
-        const tags = operation.tags;
+        let tags = operation.tags
         if (!tags || tags.length === 0) {
+            // TODO: add 'default' at the end
             return;
         }
-        // get first tag
-        const tag = tags[0];
+        tags.forEach((tag) => this.addTagByName(tag))
+    }
 
+    private addTagByName(tag: string) {
         // insert if not found
         if (!this.tags.has(tag)) {
             this.tags.set(tag, {

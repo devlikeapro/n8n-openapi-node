@@ -1,4 +1,5 @@
 import {OpenAPIVisitor, OperationContext} from "./openapi/OpenAPIVisitor";
+import * as lodash from "lodash";
 import pino from "pino";
 import {OpenAPIV3} from "openapi-types";
 import {N8NINodeProperties} from "./SchemaToINodeProperties";
@@ -76,12 +77,15 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
         if (!tags || tags.length === 0) {
             throw new Error(`No tags found for operation '${operation}'`);
         }
-        const {option, fields} = this.parseOperation(operation, context);
-        const resourceName = this.operationParser.getResourceName(operation, context);
-        const operationName = option.name;
-        this.addDisplayOption(fields, resourceName, operationName)
-        this.optionsByResource.add(resourceName, option);
-        this._fields.push(...fields)
+        const {option, fields: operationFields} = this.parseOperation(operation, context);
+        const resources = this.operationParser.getResources(operation, context);
+        for (const resourceName of resources) {
+            const fields = lodash.cloneDeep(operationFields)
+            const operationName = option.name;
+            this.addDisplayOption(fields, resourceName, operationName)
+            this.optionsByResource.add(resourceName, option);
+            this._fields.push(...fields)
+        }
     }
 
     parseFields(operation: OpenAPIV3.OperationObject, context: OperationContext) {
