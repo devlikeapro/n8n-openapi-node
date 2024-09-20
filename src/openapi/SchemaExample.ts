@@ -2,11 +2,24 @@ import {RefResolver} from "./RefResolver";
 import {OpenAPIV3} from "openapi-types";
 
 class SchemaExampleBuilder {
+    private visitedRefs: Set<string> = new Set<string>();
+
     constructor(private resolver: RefResolver) {
     }
 
     build(schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject): any {
-        schema = this.resolver.resolve(schema)
+        let refs: string[] | undefined
+        [schema, refs] = this.resolver.resolveRef(schema)
+
+        if (refs) {
+            // Prevent infinite recursion
+            for (const ref of refs) {
+                if (this.visitedRefs.has(ref)) {
+                    return {}
+                }
+                this.visitedRefs.add(ref);
+            }
+        }
         if ('oneOf' in schema) {
             return this.build(schema.oneOf!![0]);
         }
