@@ -1,11 +1,11 @@
 // export
 import {OpenAPIVisitor, OperationContext} from "./openapi/OpenAPIVisitor";
 import {OpenAPIWalker} from "./openapi/OpenAPIWalker";
-import {OpenAPIN8NParser, Override, ParserConfig} from "./OpenAPIN8NParser";
+import {N8NPropertiesBuilder, Override, ParserConfig} from "./N8NPropertiesBuilder";
 import {OperationsCollector} from "./OperationsCollector";
 
 export {
-    OpenAPIN8NParser,
+    N8NPropertiesBuilder,
     OpenAPIVisitor,
     OpenAPIWalker,
     OperationContext,

@@ -1,4 +1,4 @@
-import {OpenAPIN8NParser, Override} from './OpenAPIN8NParser';
+import {N8NPropertiesBuilder, Override} from './N8NPropertiesBuilder';
 import {BaseOperationsCollector} from "./OperationsCollector";
 
 test('query param', () => {
@@ -24,8 +24,8 @@ test('query param', () => {
         },
     };
 
-    const parser = new OpenAPIN8NParser({paths});
-    const result = parser.process()
+    const parser = new N8NPropertiesBuilder({paths});
+    const result = parser.build()
 
     expect(result).toEqual([
         {
@@ -130,8 +130,8 @@ test('path param', () => {
         },
     };
 
-    const parser = new OpenAPIN8NParser({paths}, {OperationsCollector: BaseOperationsCollector});
-    const result = parser.process()
+    const parser = new N8NPropertiesBuilder({paths}, {OperationsCollector: BaseOperationsCollector});
+    const result = parser.build()
     expect(result).toEqual([
         {
             "default": "",
@@ -245,8 +245,8 @@ test('request body', () => {
         },
     };
 
-    const parser = new OpenAPIN8NParser({paths, components}, {OperationsCollector: BaseOperationsCollector});
-    const result = parser.process()
+    const parser = new N8NPropertiesBuilder({paths, components}, {OperationsCollector: BaseOperationsCollector});
+    const result = parser.build()
 
     expect(result).toEqual([
         {
@@ -384,8 +384,8 @@ test('enum schema', () => {
     };
 
     // @ts-ignore
-    const parser = new OpenAPIN8NParser({paths}, {OperationsCollector: BaseOperationsCollector});
-    const result = parser.process()
+    const parser = new N8NPropertiesBuilder({paths}, {OperationsCollector: BaseOperationsCollector});
+    const result = parser.build()
 
     expect(result).toEqual([
         {
@@ -486,8 +486,8 @@ test('body "array" param', () => {
             },
         };
 
-    const parser = new OpenAPIN8NParser({paths}, {OperationsCollector: BaseOperationsCollector});
-        const result = parser.process()
+    const parser = new N8NPropertiesBuilder({paths}, {OperationsCollector: BaseOperationsCollector});
+    const result = parser.build()
 
     const expected: any[] = [
         {
@@ -629,11 +629,11 @@ test('test overrides', () => {
         },
     ];
 
-    const parser = new OpenAPIN8NParser({paths, components}, {
+    const parser = new N8NPropertiesBuilder({paths, components}, {
         overrides: customDefaults,
         OperationsCollector: BaseOperationsCollector
     });
-    const result = parser.process()
+    const result = parser.build()
 
     expect(result).toEqual([
         {

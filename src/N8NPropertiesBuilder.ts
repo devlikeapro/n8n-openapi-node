@@ -18,7 +18,7 @@ export interface ParserConfig {
     ResourcePropertiesCollector?: typeof ResourcePropertiesCollectorImpl
 }
 
-export class OpenAPIN8NParser {
+export class N8NPropertiesBuilder {
     private readonly doc: OpenAPIV3.Document;
     private readonly logger: pino.Logger
     private readonly walker: OpenAPIWalker;
@@ -37,7 +37,7 @@ export class OpenAPIN8NParser {
         this.overrides = config?.overrides || []
     }
 
-    process(): INodeProperties[] {
+    build(): INodeProperties[] {
         const resourcePropertiesCollector = new this.ResourcePropertiesCollector()
         this.walker.walk(resourcePropertiesCollector)
         const resourceNode = resourcePropertiesCollector.iNodeProperty
