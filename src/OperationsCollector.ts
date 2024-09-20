@@ -5,13 +5,7 @@ import {N8NINodeProperties} from "./SchemaToINodeProperties";
 import {IOperationParser, N8NOperationParser} from "./OperationParser";
 import {OptionsByResourceMap} from "./n8n/OptionsByResourceMap";
 import {INodeProperties} from "n8n-workflow";
-
-/**
- * /api/entities/{entity} => /api/entities/{{$parameter["entity"]}}
- */
-function replaceToParameter(uri: string): string {
-    return uri.replace(/{([^}]*)}/g, '{{$parameter["$1"]}}');
-}
+import {replacePathVarsToParameter} from "./n8n/utils";
 
 export class BaseOperationsCollector implements OpenAPIVisitor {
     public readonly _fields: INodeProperties[]
@@ -140,7 +134,7 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
             routing: {
                 request: {
                     method: method.toUpperCase(),
-                    url: `=${replaceToParameter(uri)}`,
+                    url: `=${replacePathVarsToParameter(uri)}`,
                 },
             },
         };
