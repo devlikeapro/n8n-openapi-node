@@ -7,7 +7,7 @@ import {SchemaExample} from "./openapi/SchemaExample";
 type Schema = OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject;
 type FromSchemaNodeProperty = Pick<INodeProperties, 'type' | 'default' | 'description' | 'options'>;
 
-function combineINodeProperties(...sources: Partial<INodeProperties>[]): INodeProperties {
+function combine(...sources: Partial<INodeProperties>[]): INodeProperties {
     const obj = lodash.defaults({}, ...sources)
     if (!obj.required) {
         // n8n does want to have required: false|null|undefined
@@ -96,7 +96,7 @@ export class N8NINodeProperties {
             description: parameter.description,
             default: parameter.example,
         };
-        const field = combineINodeProperties(fieldParameterKeys, fieldSchemaKeys)
+        const field = combine(fieldParameterKeys, fieldSchemaKeys)
 
         switch (parameter.in) {
             case "query":
@@ -147,7 +147,7 @@ export class N8NINodeProperties {
             displayName: lodash.startCase(name),
             name: name,
         }
-        const field = combineINodeProperties(fieldParameterKeys, fieldSchemaKeys)
+        const field = combine(fieldParameterKeys, fieldSchemaKeys)
         return field
     }
 
@@ -174,7 +174,7 @@ export class N8NINodeProperties {
             const fieldDefaults: Partial<INodeProperties> = {
                 required: !!schema.required
             }
-            const field = combineINodeProperties(fieldDefaults, fieldPropertyKeys)
+            const field = combine(fieldDefaults, fieldPropertyKeys)
             field.routing = {
                 request: {
                     body: '={{ JSON.parse($value) }}'
@@ -191,7 +191,7 @@ export class N8NINodeProperties {
             const fieldDefaults: Partial<INodeProperties> = {
                 required: schema.required && schema.required?.includes(key),
             }
-            const field = combineINodeProperties(fieldDefaults, fieldPropertyKeys)
+            const field = combine(fieldDefaults, fieldPropertyKeys)
             if (field.type === 'json') {
                 field.routing = {
                     request: {
