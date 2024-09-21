@@ -1,8 +1,7 @@
 import {OpenAPIVisitor, OperationContext} from "./openapi/OpenAPIVisitor";
-import * as lodash from "lodash";
 import {OpenAPIV3} from "openapi-types";
 import {INodeProperties} from "n8n-workflow";
-import {toResourceName} from "./n8n/utils";
+import {DefaultResourceParser, IResourceParser} from "../ResourceParser";
 
 interface TagObject {
     name: string;
@@ -16,6 +15,7 @@ interface TagObject {
 export class ResourcePropertiesCollector implements OpenAPIVisitor {
     private tags: Map<string, TagObject>;
     private tagsOrder = new Map<string, number>();
+    protected resourceParser: IResourceParser = new DefaultResourceParser()
 
     constructor() {
         this.tags = new Map<string, TagObject>()
@@ -23,11 +23,12 @@ export class ResourcePropertiesCollector implements OpenAPIVisitor {
 
     get iNodeProperty(): INodeProperties {
         const tags = this.sortedTags
+        const parser = this.resourceParser
         const options = tags.map((tag) => {
             return {
-                name: lodash.startCase(tag.name),
-                value: toResourceName(tag.name),
-                description: tag.description,
+                name: parser.name(tag),
+                value: parser.value(tag),
+                description: parser.description(tag),
             };
         });
         return {

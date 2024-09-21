@@ -3,10 +3,11 @@ import * as lodash from "lodash";
 import pino from "pino";
 import {OpenAPIV3} from "openapi-types";
 import {N8NINodeProperties} from "./SchemaToINodeProperties";
-import {IOperationParser, N8NOperationParser} from "./OperationParser";
+import {DefaultOperationParser, IOperationParser} from "./OperationParser";
 import {OptionsByResourceMap} from "./n8n/OptionsByResourceMap";
 import {INodeProperties} from "n8n-workflow";
 import {replacePathVarsToParameter} from "./n8n/utils";
+import {DefaultResourceParser, IResourceParser} from "../ResourceParser";
 
 export class BaseOperationsCollector implements OpenAPIVisitor {
     public readonly _fields: INodeProperties[]
@@ -15,7 +16,8 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
     private n8nNodeProperties: N8NINodeProperties;
 
     // Dependency injection light version
-    protected operationParser: IOperationParser = new N8NOperationParser()
+    protected operationParser: IOperationParser = new DefaultOperationParser()
+    protected resourceParser: IResourceParser = new DefaultResourceParser()
     private bindings: any
 
     constructor(logger: pino.Logger, doc: any) {
@@ -73,12 +75,8 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
     }
 
     _visitOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
-        const tags = operation.tags;
-        if (!tags || tags.length === 0) {
-            throw new Error(`No tags found for operation '${operation}'`);
-        }
         const {option, fields: operationFields} = this.parseOperation(operation, context);
-        const resources = this.operationParser.getResources(operation, context);
+        const resources = operation.tags!!.map((tag: string) => this.resourceParser.value({name: tag}))
         for (const resourceName of resources) {
             const fields = lodash.cloneDeep(operationFields)
             const operationName = option.name;
@@ -127,14 +125,12 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
     protected parseOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
         const method = context.method
         const uri = context.pattern;
-        const operationName = this.operationParser.getOperationName(operation, context);
-        const optionAction = this.operationParser.getOptionAction(operation, context);
-        const description = this.operationParser.getOptionDescription(operation, context)
+        const parser = this.operationParser
         const option = {
-            name: operationName,
-            value: operationName,
-            action: optionAction,
-            description: description,
+            name: parser.name(operation, context),
+            value: parser.value(operation, context),
+            action: parser.action(operation, context),
+            description: parser.description(operation, context),
             routing: {
                 request: {
                     method: method.toUpperCase(),

@@ -1,25 +1,19 @@
 import {OpenAPIV3} from "openapi-types";
 import * as lodash from "lodash";
 import {OperationContext} from "./openapi/OpenAPIVisitor";
-import {toResourceName} from "./n8n/utils";
 
 export interface IOperationParser {
-    getResources(operation: OpenAPIV3.OperationObject, context: OperationContext): string[]
+    name(operation: OpenAPIV3.OperationObject, context: OperationContext): string
 
-    getOperationName(operation: OpenAPIV3.OperationObject, context: OperationContext): string
+    value(operation: OpenAPIV3.OperationObject, context: OperationContext): string
 
-    getOptionAction(operation: OpenAPIV3.OperationObject, context: OperationContext): string
+    action(operation: OpenAPIV3.OperationObject, context: OperationContext): string
 
-    getOptionDescription(operation: OpenAPIV3.OperationObject, context: OperationContext): string
+    description(operation: OpenAPIV3.OperationObject, context: OperationContext): string
 }
 
-export class N8NOperationParser implements IOperationParser {
-    getResources(operation: OpenAPIV3.OperationObject, context: OperationContext): string[] {
-        const tags = operation.tags as string[]
-        return tags.map(toResourceName)
-    }
-
-    getOperationName(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
+export class DefaultOperationParser implements IOperationParser {
+    name(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
         let operationId: string = operation.operationId!!.split('_').slice(1).join('_');
         if (!operationId) {
             operationId = operation.operationId as string
@@ -27,11 +21,15 @@ export class N8NOperationParser implements IOperationParser {
         return lodash.startCase(operationId)
     }
 
-    getOptionAction(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
-        return operation.summary || this.getOperationName(operation, context)
+    value(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
+        return this.name(operation, context)
     }
 
-    getOptionDescription(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
+    action(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
+        return operation.summary || this.name(operation, context)
+    }
+
+    description(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
         return operation.description || operation.summary || '';
     }
 
