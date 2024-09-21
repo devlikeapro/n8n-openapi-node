@@ -21,6 +21,14 @@ export interface N8NPropertiesBuilderConfig {
     resource?: IResourceParser,
 }
 
+/**
+ *
+ * Builds n8n node "properties" from an OpenAPI document.
+ * It uses a walker to traverse the OpenAPI document and collect the necessary information.
+ * The collected information is then used to build the n8n node properties.
+ * The class uses a set of parsers to parse the OpenAPI document and build the n8n node properties.
+ *
+ */
 export class N8NPropertiesBuilder {
     private readonly doc: OpenAPIV3.Document;
     private readonly logger: pino.Logger
