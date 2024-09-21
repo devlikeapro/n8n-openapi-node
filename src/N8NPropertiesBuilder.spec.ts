@@ -630,10 +630,9 @@ test('test overrides', () => {
     ];
 
     const parser = new N8NPropertiesBuilder({paths, components}, {
-        overrides: customDefaults,
         OperationsCollector: BaseOperationsCollector
     });
-    const result = parser.build()
+    const result = parser.build(customDefaults)
 
     expect(result).toEqual([
         {

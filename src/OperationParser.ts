@@ -32,5 +32,4 @@ export class DefaultOperationParser implements IOperationParser {
     description(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
         return operation.description || operation.summary || '';
     }
-
 }

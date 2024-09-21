@@ -3,25 +3,26 @@ import * as lodash from "lodash";
 import pino from "pino";
 import {OpenAPIV3} from "openapi-types";
 import {N8NINodeProperties} from "./SchemaToINodeProperties";
-import {DefaultOperationParser, IOperationParser} from "./OperationParser";
+import {IOperationParser} from "./OperationParser";
 import {OptionsByResourceMap} from "./n8n/OptionsByResourceMap";
 import {INodeProperties} from "n8n-workflow";
 import {replacePathVarsToParameter} from "./n8n/utils";
-import {DefaultResourceParser, IResourceParser} from "../ResourceParser";
+import {IResourceParser} from "../ResourceParser";
 
 export class BaseOperationsCollector implements OpenAPIVisitor {
     public readonly _fields: INodeProperties[]
     private optionsByResource: OptionsByResourceMap = new OptionsByResourceMap()
-    private readonly logger: pino.Logger;
     private n8nNodeProperties: N8NINodeProperties;
 
-    // Dependency injection light version
-    protected operationParser: IOperationParser = new DefaultOperationParser()
-    protected resourceParser: IResourceParser = new DefaultResourceParser()
+    // Log context
     private bindings: any
 
-    constructor(logger: pino.Logger, doc: any) {
-        this.logger = logger.child({})
+    constructor(
+        doc: any,
+        protected operationParser: IOperationParser,
+        protected resourceParser: IResourceParser,
+        protected logger: pino.Logger
+    ) {
         this._fields = []
         this.n8nNodeProperties = new N8NINodeProperties(doc)
     }

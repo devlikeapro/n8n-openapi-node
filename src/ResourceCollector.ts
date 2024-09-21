@@ -1,7 +1,7 @@
 import {OpenAPIVisitor, OperationContext} from "./openapi/OpenAPIVisitor";
 import {OpenAPIV3} from "openapi-types";
 import {INodeProperties} from "n8n-workflow";
-import {DefaultResourceParser, IResourceParser} from "../ResourceParser";
+import {IResourceParser} from "../ResourceParser";
 
 interface TagObject {
     name: string;
@@ -12,16 +12,15 @@ interface TagObject {
  * Collects resource properties from OpenAPI document
  * Resource is basically tags from OpenAPI spec
  */
-export class ResourcePropertiesCollector implements OpenAPIVisitor {
+export class ResourceCollector implements OpenAPIVisitor {
     private tags: Map<string, TagObject>;
     private tagsOrder = new Map<string, number>();
-    protected resourceParser: IResourceParser = new DefaultResourceParser()
 
-    constructor() {
+    constructor(protected resourceParser: IResourceParser) {
         this.tags = new Map<string, TagObject>()
     }
 
-    get iNodeProperty(): INodeProperties {
+    get resources(): INodeProperties {
         const tags = this.sortedTags
         const parser = this.resourceParser
         const options = tags.map((tag) => {
