@@ -14,15 +14,11 @@ export interface IOperationParser {
 
 export class DefaultOperationParser implements IOperationParser {
     name(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
-        let operationId: string = operation.operationId!!.split('_').slice(1).join('_');
-        if (!operationId) {
-            operationId = operation.operationId as string
-        }
-        return lodash.startCase(operationId)
+        return lodash.startCase(operation.operationId)
     }
 
     value(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
-        return this.name(operation, context)
+        return lodash.startCase(operation.operationId)
     }
 
     action(operation: OpenAPIV3.OperationObject, context: OperationContext): string {

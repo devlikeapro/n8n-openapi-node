@@ -1,5 +1,32 @@
 import {N8NPropertiesBuilder, Override} from './N8NPropertiesBuilder';
+
 import {BaseOperationsCollector} from "./OperationsCollector";
+import {OpenAPIV3} from "openapi-types";
+import {OperationContext} from "./openapi/OpenAPIVisitor";
+import * as lodash from "lodash";
+import {DefaultOperationParser} from "./OperationParser";
+
+export class CustomOperationParser extends DefaultOperationParser {
+    name(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
+        let operationId: string = operation.operationId!!.split('_').slice(1).join('_');
+        if (!operationId) {
+            operationId = operation.operationId as string
+        }
+        return lodash.startCase(operationId)
+    }
+
+    value(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
+        return this.name(operation, context)
+    }
+
+    action(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
+        return operation.summary || this.name(operation, context)
+    }
+
+    description(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
+        return operation.description || operation.summary || '';
+    }
+}
 
 test('query param', () => {
     const paths = {
@@ -24,7 +51,7 @@ test('query param', () => {
         },
     };
 
-    const parser = new N8NPropertiesBuilder({paths});
+    const parser = new N8NPropertiesBuilder({paths}, {operation: new CustomOperationParser()});
     const result = parser.build()
 
     expect(result).toEqual([
@@ -130,7 +157,10 @@ test('path param', () => {
         },
     };
 
-    const parser = new N8NPropertiesBuilder({paths}, {OperationsCollector: BaseOperationsCollector});
+    const parser = new N8NPropertiesBuilder({paths}, {
+        OperationsCollector: BaseOperationsCollector,
+        operation: new CustomOperationParser()
+    });
     const result = parser.build()
     expect(result).toEqual([
         {
@@ -245,7 +275,10 @@ test('request body', () => {
         },
     };
 
-    const parser = new N8NPropertiesBuilder({paths, components}, {OperationsCollector: BaseOperationsCollector});
+    const parser = new N8NPropertiesBuilder({paths, components}, {
+        OperationsCollector: BaseOperationsCollector,
+        operation: new CustomOperationParser()
+    });
     const result = parser.build()
 
     expect(result).toEqual([
@@ -384,7 +417,10 @@ test('enum schema', () => {
     };
 
     // @ts-ignore
-    const parser = new N8NPropertiesBuilder({paths}, {OperationsCollector: BaseOperationsCollector});
+    const parser = new N8NPropertiesBuilder({paths}, {
+        OperationsCollector: BaseOperationsCollector,
+        operation: new CustomOperationParser()
+    });
     const result = parser.build()
 
     expect(result).toEqual([
@@ -486,7 +522,10 @@ test('body "array" param', () => {
             },
         };
 
-    const parser = new N8NPropertiesBuilder({paths}, {OperationsCollector: BaseOperationsCollector});
+    const parser = new N8NPropertiesBuilder({paths}, {
+        OperationsCollector: BaseOperationsCollector,
+        operation: new CustomOperationParser()
+    });
     const result = parser.build()
 
     const expected: any[] = [
@@ -630,7 +669,8 @@ test('test overrides', () => {
     ];
 
     const parser = new N8NPropertiesBuilder({paths, components}, {
-        OperationsCollector: BaseOperationsCollector
+        OperationsCollector: BaseOperationsCollector,
+        operation: new CustomOperationParser()
     });
     const result = parser.build(customDefaults)
 
@@ -768,7 +808,9 @@ test('multiple tags', () => {
         },
     };
 
-    const parser = new N8NPropertiesBuilder({paths});
+    const parser = new N8NPropertiesBuilder({paths}, {
+        operation: new CustomOperationParser()
+    })
     const result = parser.build()
 
     expect(result).toEqual(
@@ -961,7 +1003,9 @@ test('no tags - default tag', () => {
         },
     };
 
-    const parser = new N8NPropertiesBuilder({paths});
+    const parser = new N8NPropertiesBuilder({paths}, {
+        operation: new CustomOperationParser()
+    });
     const result = parser.build()
 
     expect(result).toEqual(
