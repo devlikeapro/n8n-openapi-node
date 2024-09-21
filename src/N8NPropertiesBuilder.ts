@@ -6,7 +6,7 @@ import {ResourceCollector as ResourcePropertiesCollector} from "./ResourceCollec
 import {BaseOperationsCollector, OperationsCollector as OperationsCollectorImpl} from "./OperationsCollector";
 import * as lodash from "lodash";
 import {DefaultOperationParser, IOperationParser} from "./OperationParser";
-import {DefaultResourceParser, IResourceParser} from "../ResourceParser";
+import {DefaultResourceParser, IResourceParser} from "./ResourceParser";
 
 export interface Override {
     find: any;

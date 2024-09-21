@@ -5,7 +5,7 @@ import {OpenAPIV3} from "openapi-types";
 import {OperationContext} from "./openapi/OpenAPIVisitor";
 import * as lodash from "lodash";
 import {DefaultOperationParser} from "./OperationParser";
-import {DefaultResourceParser} from "../ResourceParser";
+import {DefaultResourceParser} from "./ResourceParser";
 
 export class CustomOperationParser extends DefaultOperationParser {
     name(operation: OpenAPIV3.OperationObject, context: OperationContext): string {

@@ -4,7 +4,7 @@ import {OpenAPIV3} from "openapi-types";
 import {OperationContext} from "../src/openapi/OpenAPIVisitor";
 import {DefaultOperationParser} from "../src/OperationParser";
 import * as lodash from "lodash";
-import {DefaultResourceParser} from "../ResourceParser";
+import {DefaultResourceParser} from "../src";
 
 function sessionFirst(a: any, b: any) {
     if (a.name === 'session') {
