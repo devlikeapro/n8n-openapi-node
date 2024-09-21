@@ -4,14 +4,14 @@ import {join} from 'path';
 import {sleep} from "n8n-workflow";
 
 // Define the path to your 'samples' directory
-const examplesDir = join(__dirname, 'examples');
+const samplesDir = join(__dirname, 'samples');
 
 // Read all JSON files from the samples directory
-const jsonFiles = readdirSync(examplesDir).filter(file => file.endsWith('.json'));
+const jsonFiles = readdirSync(samplesDir).filter(file => file.endsWith('.json'));
 
 describe('smoke', () => {
     test.each(jsonFiles)('%s', async (fileName) => {
-        const filePath = join(examplesDir, fileName);
+        const filePath = join(samplesDir, fileName);
         const doc = require(filePath);
         const parser = new N8NPropertiesBuilder(doc);
         parser.build();

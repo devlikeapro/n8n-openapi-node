@@ -1,8 +1,8 @@
 import {OpenAPIV3} from "openapi-types";
 import {INodeProperties, NodePropertyTypes} from "n8n-workflow";
-import {RefResolver} from "./openapi/RefResolver";
+import {RefResolver} from "../openapi/RefResolver";
 import * as lodash from "lodash";
-import {SchemaExample} from "./openapi/SchemaExample";
+import {SchemaExample} from "../openapi/SchemaExample";
 
 type Schema = OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject;
 type FromSchemaNodeProperty = Pick<INodeProperties, 'type' | 'default' | 'description' | 'options'>;
