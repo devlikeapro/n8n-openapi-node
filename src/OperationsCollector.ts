@@ -76,6 +76,10 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
     }
 
     _visitOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
+        if (this.operationParser.shouldSkip(operation, context)) {
+            this.logger.info(this.bindings, 'Skipping operation')
+            return
+        }
         const {option, fields: operationFields} = this.parseOperation(operation, context);
         const resources = operation.tags!!.map((tag: string) => this.resourceParser.value({name: tag}))
         for (const resourceName of resources) {
@@ -150,13 +154,6 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
 }
 
 export class OperationsCollector extends BaseOperationsCollector {
-    visitOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
-        if (operation.deprecated) {
-            return;
-        }
-        super.visitOperation(operation, context);
-    }
-
     protected parseOperation(operation: OpenAPIV3.OperationObject, context: OperationContext) {
         const result = super.parseOperation(operation, context)
         const notice: INodeProperties = {

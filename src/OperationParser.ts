@@ -10,9 +10,15 @@ export interface IOperationParser {
     action(operation: OpenAPIV3.OperationObject, context: OperationContext): string
 
     description(operation: OpenAPIV3.OperationObject, context: OperationContext): string
+
+    shouldSkip(operation: OpenAPIV3.OperationObject, context: OperationContext): boolean;
 }
 
 export class DefaultOperationParser implements IOperationParser {
+    shouldSkip(operation: OpenAPIV3.OperationObject, context: OperationContext): boolean {
+        return !!operation.deprecated
+    }
+
     name(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
         return lodash.startCase(operation.operationId)
     }
