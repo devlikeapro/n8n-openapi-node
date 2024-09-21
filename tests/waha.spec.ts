@@ -4,6 +4,7 @@ import {OpenAPIV3} from "openapi-types";
 import {OperationContext} from "../src/openapi/OpenAPIVisitor";
 import {DefaultOperationParser} from "../src/OperationParser";
 import * as lodash from "lodash";
+import {DefaultResourceParser} from "../ResourceParser";
 
 function sessionFirst(a: any, b: any) {
     if (a.name === 'session') {
@@ -13,6 +14,12 @@ function sessionFirst(a: any, b: any) {
         return 1;
     }
     return 0;
+}
+
+export class WAHAResourceParser extends DefaultResourceParser {
+    value(tag: OpenAPIV3.TagObject): string {
+        return lodash.startCase(tag.name.replace(/[^a-zA-Z0-9_-]/g, ''));
+    }
 }
 
 export class WAHAOperationParser extends DefaultOperationParser {
@@ -50,6 +57,7 @@ test('waha.json', () => {
     const config: N8NPropertiesBuilderConfig = {
         OperationsCollector: WAHAOperationsCollector,
         operation: new WAHAOperationParser(),
+        resource: new WAHAResourceParser(),
     }
     const parser = new N8NPropertiesBuilder(doc, config);
     const result = parser.build()

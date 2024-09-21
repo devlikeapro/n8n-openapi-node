@@ -5,6 +5,7 @@ import {OpenAPIV3} from "openapi-types";
 import {OperationContext} from "./openapi/OpenAPIVisitor";
 import * as lodash from "lodash";
 import {DefaultOperationParser} from "./OperationParser";
+import {DefaultResourceParser} from "../ResourceParser";
 
 export class CustomOperationParser extends DefaultOperationParser {
     name(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
@@ -25,6 +26,12 @@ export class CustomOperationParser extends DefaultOperationParser {
 
     description(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
         return operation.description || operation.summary || '';
+    }
+}
+
+export class CustomResourceParser extends DefaultResourceParser {
+    value(tag: OpenAPIV3.TagObject): string {
+        return lodash.startCase(tag.name.replace(/[^a-zA-Z0-9_-]/g, ''));
     }
 }
 
@@ -51,7 +58,10 @@ test('query param', () => {
         },
     };
 
-    const parser = new N8NPropertiesBuilder({paths}, {operation: new CustomOperationParser()});
+    const parser = new N8NPropertiesBuilder({paths}, {
+        operation: new CustomOperationParser(),
+        resource: new CustomResourceParser(),
+    });
     const result = parser.build()
 
     expect(result).toEqual([
@@ -159,7 +169,8 @@ test('path param', () => {
 
     const parser = new N8NPropertiesBuilder({paths}, {
         OperationsCollector: BaseOperationsCollector,
-        operation: new CustomOperationParser()
+        operation: new CustomOperationParser(),
+        resource: new CustomResourceParser(),
     });
     const result = parser.build()
     expect(result).toEqual([
@@ -277,7 +288,8 @@ test('request body', () => {
 
     const parser = new N8NPropertiesBuilder({paths, components}, {
         OperationsCollector: BaseOperationsCollector,
-        operation: new CustomOperationParser()
+        operation: new CustomOperationParser(),
+        resource: new CustomResourceParser(),
     });
     const result = parser.build()
 
@@ -419,7 +431,8 @@ test('enum schema', () => {
     // @ts-ignore
     const parser = new N8NPropertiesBuilder({paths}, {
         OperationsCollector: BaseOperationsCollector,
-        operation: new CustomOperationParser()
+        operation: new CustomOperationParser(),
+        resource: new CustomResourceParser(),
     });
     const result = parser.build()
 
@@ -524,7 +537,8 @@ test('body "array" param', () => {
 
     const parser = new N8NPropertiesBuilder({paths}, {
         OperationsCollector: BaseOperationsCollector,
-        operation: new CustomOperationParser()
+        operation: new CustomOperationParser(),
+        resource: new CustomResourceParser(),
     });
     const result = parser.build()
 
@@ -670,7 +684,8 @@ test('test overrides', () => {
 
     const parser = new N8NPropertiesBuilder({paths, components}, {
         OperationsCollector: BaseOperationsCollector,
-        operation: new CustomOperationParser()
+        operation: new CustomOperationParser(),
+        resource: new CustomResourceParser(),
     });
     const result = parser.build(customDefaults)
 
@@ -809,7 +824,8 @@ test('multiple tags', () => {
     };
 
     const parser = new N8NPropertiesBuilder({paths}, {
-        operation: new CustomOperationParser()
+        operation: new CustomOperationParser(),
+        resource: new CustomResourceParser(),
     })
     const result = parser.build()
 
@@ -1004,7 +1020,8 @@ test('no tags - default tag', () => {
     };
 
     const parser = new N8NPropertiesBuilder({paths}, {
-        operation: new CustomOperationParser()
+        operation: new CustomOperationParser(),
+        resource: new CustomResourceParser(),
     });
     const result = parser.build()
 
