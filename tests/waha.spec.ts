@@ -53,7 +53,7 @@ export class WAHAOperationsCollector extends OperationsCollector {
 }
 
 test('waha.json', () => {
-    const doc = require('./examples/waha.json');
+    const doc = require('./samples/waha.json');
     const config: N8NPropertiesBuilderConfig = {
         OperationsCollector: WAHAOperationsCollector,
         operation: new WAHAOperationParser(),

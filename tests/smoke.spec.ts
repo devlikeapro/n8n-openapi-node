@@ -3,10 +3,10 @@ import {readdirSync} from 'fs';
 import {join} from 'path';
 import {sleep} from "n8n-workflow";
 
-// Define the path to your 'examples' directory
+// Define the path to your 'samples' directory
 const examplesDir = join(__dirname, 'examples');
 
-// Read all JSON files from the examples directory
+// Read all JSON files from the samples directory
 const jsonFiles = readdirSync(examplesDir).filter(file => file.endsWith('.json'));
 
 describe('smoke', () => {

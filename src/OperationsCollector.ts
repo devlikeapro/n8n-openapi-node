@@ -7,7 +7,7 @@ import {IOperationParser} from "./OperationParser";
 import {OptionsByResourceMap} from "./n8n/OptionsByResourceMap";
 import {INodeProperties} from "n8n-workflow";
 import {replacePathVarsToParameter} from "./n8n/utils";
-import {IResourceParser} from "../ResourceParser";
+import {IResourceParser} from "./ResourceParser";
 
 export class BaseOperationsCollector implements OpenAPIVisitor {
     public readonly _fields: INodeProperties[]

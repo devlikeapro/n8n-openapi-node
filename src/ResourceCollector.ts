@@ -1,7 +1,7 @@
 import {OpenAPIVisitor, OperationContext} from "./openapi/OpenAPIVisitor";
 import {OpenAPIV3} from "openapi-types";
 import {INodeProperties} from "n8n-workflow";
-import {IResourceParser} from "../ResourceParser";
+import {IResourceParser} from "./ResourceParser";
 
 interface TagObject {
     name: string;
