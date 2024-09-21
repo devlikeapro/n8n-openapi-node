@@ -91,6 +91,9 @@ export class BaseOperationsCollector implements OpenAPIVisitor {
         }
     }
 
+    /**
+     * Parse fields from operation, both parameters and request body
+     */
     parseFields(operation: OpenAPIV3.OperationObject, context: OperationContext) {
         const fields = [];
         const parameterFields = this.n8nNodeProperties.fromParameters(operation.parameters)
