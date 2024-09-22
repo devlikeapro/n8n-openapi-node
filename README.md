@@ -31,6 +31,19 @@ Turn Your **OpenAPI** (**Swagger**) spec into a **n8n node**!
 
 # Quick Start
 
+If you have OpenAPI specification - you can easily in few minutes create
+[your community node](https://docs.n8n.io/integrations/community-nodes/usage/) for n8n!
+
+It'll still require to create and publish `n8n-nodes-<yourproject>` npm package,
+but you can use this package to generate most of the code.
+
+👉 We recommend using one of repo for the `n8n-nodes-<yourproject>` package:
+
+- https://github.com/devlikeapro/n8n-nodes-petstore - Petstore example generated from OpenAPI v3 spec
+- https://github.com/n8n-io/n8n-nodes-starter - Official n8n nodes starter template
+
+Find more real-world examples in [Use Cases](#use-cases) section.
+
 ## Installation
 
 Add `@devlikeapro/n8n-openapi-node` as dependency
@@ -43,12 +56,6 @@ pnpm add @devlikeapro/n8n-openapi-node
 yarn add @devlikeapro/n8n-openapi-node
 ```
 
-👉 We recommend using one of repo for the template:
-
-- https://github.com/devlikeapro/n8n-nodes-petstore - Petstore example generated from OpenAPI v3 spec
-- https://github.com/n8n-io/n8n-nodes-starter - Official n8n nodes starter template
-
-Find more real-world examples in [Use Cases](#use-cases) section.
 
 ## Usage
 
