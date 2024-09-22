@@ -9,11 +9,12 @@ Turn Your **OpenAPI** (**Swagger**) spec into a **n8n node**!
 
 - [Installation](#installation)
 - [Usage](#usage)
-  * [Overview](#overview)
-  * [Customization](#customization)
-    + [Resource](#resource)
-    + [Operation](#operation)
-    + [Fields](#fields)
+- [How it works](#how-it-works)
+  * [Request Body](#request-body)
+- [Customization](#customization)
+  * [Resource](#resource)
+  * [Operation](#operation)
+  * [Fields](#fields)
 - [Use Cases](#use-cases)
 - [FAQ](#faq)
   * [I have only OpenAPI v2 spec, what can I do?](#i-have-only-openapi-v2-spec-what-can-i-do)
@@ -37,10 +38,10 @@ yarn add @devlikeapro/n8n-openapi-node
 
 # Usage
 
-Add your `openapi.json` to `src/{NodeName}` folder
-(use **OpenAPI v3** and **json**, see [FAQ](#faq) if you don't have it)
+1. Add your `openapi.json` to `src/{NodeName}` folder
+   (use **OpenAPI v3** and **json**, see [FAQ](#faq) if you don't have it)
 
-Get your `Node.properties` from OpenAPI v3 spec:
+2. Get your `Node.properties` from OpenAPI v3 spec:
 
 ```typescript
 import {INodeType, INodeTypeDescription} from 'n8n-workflow';
@@ -83,21 +84,105 @@ export class Petstore implements INodeType {
 }
 ```
 
-## Overview
+# How it works
+
+`N8NPropertiesBuilder` extracts few entities from OpenAPI v3 to your n8n community node:
+
+1. **Resource** - a list of **Tags** from OpenAPI spec
+2. **Operation** - a list of **Operations** from OpenAPI spec (aka **Actions** in n8n)
+3. **Query Parameters** - a list of `operation.parameters` from OpenAPI spec
+4. **Request Body** - a list of `operation.requestBody.content` from OpenAPI spec (only for `application/json`)
+5. **Headers** - a list of `operation.parameters` from OpenAPI spec
+
+## Request Body
+
+It doesn't create the full structure of the request body, only the first level of properties.
+So if you have request body as
+
+```json
+{
+  "name": "string",
+  "config": {
+    "id": 0,
+    "name": "string"
+  }
+}
+```
+
+it creates 2 fields in n8n:
+
+- `name` - with default value `string`
+- `config` - with default value `{"id": 0, "name": "string"}`
+
+# Customization
+
+## Resource
+
+You can override the way how to extract **Resource** from **OpenAPI Tag** defining your custom `IResourceParser`:
+
+```typescript
+import {IResourceParser} from '@devlikeapro/n8n-openapi-node';
+
+export class CustomResourceParser {
+  CUSTOM_DESCRIPTION = {
+    "cats": "Cats are cute",
+  }
+
+  name(tag: OpenAPIV3.TagObject): string {
+    // Your custom logic here
+    if (tag['X-Visible-Name']) {
+      return tag['X-Visible-Name'];
+    }
+    return lodash.startCase(tag.name);
+  }
+
+  value(tag: Pick<OpenAPIV3.TagObject, "name">): string {
+    // Remove all non-alphanumeric characters
+    const name = tag.name.replace(/[^a-zA-Z0-9_-]/g, '')
+    return lodash.startCase(name)
+  }
+
+  description(tag: OpenAPIV3.TagObject): string {
+    // Your custom logic here
+    return this.CUSTOM_DESCRIPTION[tag.name] || tag.description || '';
+  }
+}
+```
+
+```typescript
+import {N8NPropertiesBuilder, N8NPropertiesBuilderConfig} from '@devlikeapro/n8n-openapi-node';
+import * as doc from './openapi.json';
+
+import {CustomResourceParser} from './CustomResourceParser';
+
+const config: N8NPropertiesBuilderConfig = {
+  resource: new CustomResourceParser()
+}
+const parser = new N8NPropertiesBuilder(doc, config);
+const properties = parser.build()
+```
+
+Alternatively, you can use `DefaultResourceParser` and override only the methods you need:
+
+```typescript
+import {OpenAPIV3} from 'openapi-types';
+import * as lodash from 'lodash';
+import {DefaultResourceParser} from '@devlikeapro/n8n-openapi-node';
+
+export class CustomResourceParser extends DefaultResourceParser {
+  value(tag: OpenAPIV3.TagObject): string {
+    return lodash.startCase(tag.name.replace(/[^a-zA-Z0-9_-]/g, ''));
+  }
+}
+```
+
+The default implementation you can find in [src/ResourceParser.ts](src/ResourceParser.ts)
+
+## Operation
 
 tbd
 
-## Customization
-
-### Resource
-
-tbd
-
-### Operation
-
-tbd
-
-### Fields
+## Fields
 
 tbd
 
