@@ -179,19 +179,6 @@ export class CustomResourceParser {
 }
 ```
 
-```typescript
-import {N8NPropertiesBuilder, N8NPropertiesBuilderConfig} from '@devlikeapro/n8n-openapi-node';
-import * as doc from './openapi.json';
-
-import {CustomResourceParser} from './CustomResourceParser';
-
-const config: N8NPropertiesBuilderConfig = {
-  resource: new CustomResourceParser()
-}
-const parser = new N8NPropertiesBuilder(doc, config);
-const properties = parser.build()
-```
-
 Alternatively, you can use `DefaultResourceParser` and override only the methods you need:
 
 ```typescript
@@ -204,6 +191,21 @@ export class CustomResourceParser extends DefaultResourceParser {
     return lodash.startCase(tag.name.replace(/[^a-zA-Z0-9_-]/g, ''));
   }
 }
+```
+
+Then you use it in `N8NPropertiesBuilder` in `config.resource`:
+
+```typescript
+import {N8NPropertiesBuilder, N8NPropertiesBuilderConfig} from '@devlikeapro/n8n-openapi-node';
+import * as doc from './openapi.json';
+
+import {CustomResourceParser} from './CustomResourceParser';
+
+const config: N8NPropertiesBuilderConfig = {
+  resource: new CustomResourceParser()
+}
+const parser = new N8NPropertiesBuilder(doc, config);
+const properties = parser.build()
 ```
 
 The default implementation you can find in [src/ResourceParser.ts](src/ResourceParser.ts)
