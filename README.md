@@ -179,7 +179,8 @@ export class CustomResourceParser {
 }
 ```
 
-Alternatively, you can use `DefaultResourceParser` and override only the methods you need:
+Alternatively, you can use `DefaultResourceParser` and override only the methods you need.
+The default implementation you can find in [src/ResourceParser.ts](src/ResourceParser.ts)
 
 ```typescript
 import {OpenAPIV3} from 'openapi-types';
@@ -208,7 +209,7 @@ const parser = new N8NPropertiesBuilder(doc, config);
 const properties = parser.build()
 ```
 
-The default implementation you can find in [src/ResourceParser.ts](src/ResourceParser.ts)
+Find real example in [@devlikeapro/n8n-nodes-waha](https://github.com/devlikeapro/n8n-nodes-waha) repository.
 
 ## Operation
 
@@ -247,7 +248,8 @@ export class CustomOperationParser implements IOperationParser {
 }
 ```
 
-Or you can use `DefaultOperationParser` and override only the methods you need:
+Alternatively, you can use `DefaultOperationParser` and override only the methods you need.
+The default implementation you can find in [src/OperationParser.ts](src/OperationParser.ts)
 
 ```typescript
 import {DefaultOperationParser} from '@devlikeapro/n8n-openapi-node';
@@ -278,9 +280,47 @@ const parser = new N8NPropertiesBuilder(doc, config);
 const properties = parser.build()
 ```
 
+Find real example in [@devlikeapro/n8n-nodes-waha](https://github.com/devlikeapro/n8n-nodes-waha) repository.
+
 ## Fields
 
-tbd
+You can override some values for fields at the end, when full `properties` are ready.
+
+Here's example how you can override `session` field value (which has `'default'` string default value) to more n8n
+suitable `=${$json.session}}`:
+
+```typescript
+import {Override} from '@devlikeapro/n8n-openapi-node';
+
+export const customDefaults: Override[] = [
+  {
+    // Find field by fields matching
+    find: {
+      name: 'session',
+      required: true,
+      type: 'string',
+    },
+    // Replace 'default' field value
+    replace: {
+      default: '={{ $json.session }}',
+    },
+  },
+];
+```
+
+Then you use it in `N8NPropertiesBuilder`:
+
+```typescript
+
+import {N8NPropertiesBuilder, N8NPropertiesBuilderConfig} from '@devlikeapro/n8n-openapi-node';
+import * as doc from './openapi.json';
+import {customDefaults} from './customDefaults';
+
+const parser = new N8NPropertiesBuilder(doc);
+const properties = parser.build(customDefaults);
+```
+
+Find real example in [@devlikeapro/n8n-nodes-waha](https://github.com/devlikeapro/n8n-nodes-waha) repository.
 
 # Use Cases
 
