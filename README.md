@@ -43,6 +43,13 @@ pnpm add @devlikeapro/n8n-openapi-node
 yarn add @devlikeapro/n8n-openapi-node
 ```
 
+👉 We recommend using one of repo for the template:
+
+- https://github.com/devlikeapro/n8n-nodes-petstore - Petstore example generated from OpenAPI v3 spec
+- https://github.com/n8n-io/n8n-nodes-starter - Official n8n nodes starter template
+
+Find more real-world examples in [Use Cases](#use-cases) section.
+
 ## Usage
 
 1. Add your `openapi.json` to `src/{NodeName}` folder
