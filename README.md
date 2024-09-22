@@ -212,7 +212,71 @@ The default implementation you can find in [src/ResourceParser.ts](src/ResourceP
 
 ## Operation
 
-tbd
+You can override the way how to extract **Operation** from **OpenAPI Operation** defining your custom
+`IOperationParser`:
+
+```typescript
+import {IOperationParser} from '@devlikeapro/n8n-openapi-node';
+
+export class CustomOperationParser implements IOperationParser {
+  shouldSkip(operation: OpenAPIV3.OperationObject, context: OperationContext): boolean {
+    // By default it skips operation.deprecated
+    // But we can include all operations
+    return false
+  }
+
+  name(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
+    if (operation['X-Visible-Name']) {
+      return operation['X-Visible-Name'];
+    }
+    return lodash.startCase(operation.operationId)
+  }
+
+  value(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
+    return lodash.startCase(operation.operationId)
+  }
+
+  action(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
+    // How operation is displayed in n8n when you select your node (right form)
+    return operation.summary || this.name(operation, context)
+  }
+
+  description(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
+    return operation.description || operation.summary || '';
+  }
+}
+```
+
+Or you can use `DefaultOperationParser` and override only the methods you need:
+
+```typescript
+import {DefaultOperationParser} from '@devlikeapro/n8n-openapi-node';
+
+export class CustomOperationParser extends DefaultOperationParser {
+  name(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
+    // NestJS add operationId in format CatController_findOne
+    let operationId: string = operation.operationId!!.split('_').slice(1).join('_');
+    if (!operationId) {
+      operationId = operation.operationId as string;
+    }
+    return lodash.startCase(operationId);
+  }
+}
+```
+
+Then you use it in `N8NPropertiesBuilder` in `config.operation`:
+
+```typescript
+import {N8NPropertiesBuilder, N8NPropertiesBuilderConfig} from '@devlikeapro/n8n-openapi-node';
+import * as doc from './openapi.json';
+import {CustomOperationParser} from './CustomOperationParser';
+
+const config: N8NPropertiesBuilderConfig = {
+  operation: new CustomOperationParser()
+}
+const parser = new N8NPropertiesBuilder(doc, config);
+const properties = parser.build()
+```
 
 ## Fields
 
