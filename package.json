@@ -1,7 +1,7 @@
 {
   "name": "@devlikeapro/n8n-openapi-node",
   "version": "0.1.0",
-  "description": "Create Your n8n Community Node from OpenAPI (Swagger) spec!",
+  "description": "Turn OpenAPI specs into n8n node",
   "main": "dist/src/index.js",
   "module": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
