@@ -7,13 +7,18 @@ Turn Your **OpenAPI** (**Swagger**) spec into a **n8n node**!
 
 <!-- toc -->
 
-- [Installation](#installation)
-- [Usage](#usage)
+- [Quick Start](#quick-start)
+  * [Installation](#installation)
+  * [Usage](#usage)
 - [How it works](#how-it-works)
-  * [Request Body](#request-body)
-- [Customization](#customization)
   * [Resource](#resource)
   * [Operation](#operation)
+  * [Query Parameters](#query-parameters)
+  * [Request Body](#request-body)
+  * [Headers](#headers)
+- [Customization](#customization)
+  * [Resource](#resource-1)
+  * [Operation](#operation-1)
   * [Fields](#fields)
 - [Use Cases](#use-cases)
 - [FAQ](#faq)
@@ -24,7 +29,9 @@ Turn Your **OpenAPI** (**Swagger**) spec into a **n8n node**!
 
 <!-- tocstop -->
 
-# Installation
+# Quick Start
+
+## Installation
 
 Add `@devlikeapro/n8n-openapi-node` as dependency
 
@@ -36,7 +43,7 @@ pnpm add @devlikeapro/n8n-openapi-node
 yarn add @devlikeapro/n8n-openapi-node
 ```
 
-# Usage
+## Usage
 
 1. Add your `openapi.json` to `src/{NodeName}` folder
    (use **OpenAPI v3** and **json**, see [FAQ](#faq) if you don't have it)
@@ -94,6 +101,18 @@ export class Petstore implements INodeType {
 4. **Request Body** - a list of `operation.requestBody.content` from OpenAPI spec (only for `application/json`)
 5. **Headers** - a list of `operation.parameters` from OpenAPI spec
 
+## Resource
+
+By default, it get **Tags** from OpenAPI spec and converts them to **Resource** in n8n.
+
+## Operation
+
+By default, it gets **Operations** from OpenAPI spec and converts them to **Actions** in n8n.
+
+## Query Parameters
+
+It gets `operation.parameters` from OpenAPI spec and converts them to **Query Parameters** in n8n.
+
 ## Request Body
 
 It doesn't create the full structure of the request body, only the first level of properties.
@@ -113,6 +132,10 @@ it creates 2 fields in n8n:
 
 - `name` - with default value `string`
 - `config` - with default value `{"id": 0, "name": "string"}`
+
+## Headers
+
+It gets `operation.parameters` from OpenAPI spec and converts them to **Headers** in n8n.
 
 # Customization
 
