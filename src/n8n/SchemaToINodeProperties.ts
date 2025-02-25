@@ -3,6 +3,10 @@ import {INodeProperties, NodePropertyTypes} from "n8n-workflow";
 import {RefResolver} from "../openapi/RefResolver";
 import * as lodash from "lodash";
 import {SchemaExample} from "../openapi/SchemaExample";
+import {
+    INodePropertyCollection,
+    INodePropertyOptions
+} from 'n8n-workflow/dist/Interfaces'
 
 type Schema = OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject;
 type FromSchemaNodeProperty = Pick<INodeProperties, 'type' | 'default' | 'description' | 'options'>;
@@ -43,6 +47,8 @@ export class N8NINodeProperties {
         let type: NodePropertyTypes;
         let defaultValue = this.schemaExample.extractExample(schema)
 
+        let options: Array<INodePropertyOptions | INodeProperties | INodePropertyCollection> | undefined = undefined
+
         switch (schema.type) {
             case 'boolean':
                 type = 'boolean';
@@ -58,8 +64,20 @@ export class N8NINodeProperties {
                 defaultValue = defaultValue !== undefined ? JSON.stringify(defaultValue, null, 2) : '{}';
                 break;
             case 'array':
-                type = 'json';
-                defaultValue = defaultValue !== undefined ? JSON.stringify(defaultValue, null, 2) : '[]';
+                let schemaAsArray = schema as any;
+                if (schemaAsArray.items && schemaAsArray.items.enum && schemaAsArray.items.enum.length > 0) {
+                    type = 'multiOptions';
+                    options = schemaAsArray.items.enum.map((value: string) => {
+                        return {
+                            name: lodash.startCase(value),
+                            value: value,
+                        };
+                    });
+                    defaultValue = defaultValue !== undefined ? defaultValue : [];
+                } else {
+                    type = 'json';
+                    defaultValue = defaultValue !== undefined ? JSON.stringify(defaultValue, null, 2) : '[]';
+                }
                 break;
             case 'number':
             case 'integer':
@@ -68,11 +86,14 @@ export class N8NINodeProperties {
                 break;
         }
 
-        const field: FromSchemaNodeProperty = {
+        let field: FromSchemaNodeProperty = {
             type: type,
             default: defaultValue,
             description: schema.description,
         };
+        if (options) {
+            field.options = options;
+        }
         if (schema.enum && schema.enum.length > 0) {
             field.type = 'options';
             field.options = schema.enum.map((value: string) => {
@@ -115,7 +136,7 @@ export class N8NINodeProperties {
                     send: {
                         type: 'query',
                         property: parameter.name,
-                        value: '={{ $value }}',
+                        value: fieldSchemaKeys.type === "multiOptions" && !parameter.explode ? "={{ $value.join(',') }}" : '={{ $value }}',
                         propertyInDotNotation: false,
                     },
                 };
