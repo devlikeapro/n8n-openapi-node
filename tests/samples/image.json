@@ -1,0 +1,128 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Image example",
+    "version": "0"
+  },
+  "tags": [
+    {
+      "name": "Example"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "ClientErrorResponse": {
+        "allOf": [
+          {
+            "type": "object",
+            "required": [
+              "errors"
+            ],
+            "properties": {
+              "errors": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "status",
+                    "title",
+                    "detail"
+                  ],
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "404"
+                    },
+                    "title": {
+                      "type": "string",
+                      "example": "Not found"
+                    },
+                    "detail": {
+                      "type": "string",
+                      "example": "The requested resource cannot be found."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "paths": {
+    "/example/{id}/render/{parameter}": {
+      "get": {
+        "tags": [
+          "Example"
+        ],
+        "summary": "Render the example by ID",
+        "description": "Renders something to a PNG image using the specified parameter and resolution.\nThis endpoint returns the rendered image as a PNG file.",
+        "operationId": "render_example_by_id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The ID of the Example to render",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "parameter",
+            "in": "path",
+            "description": "Some parameter we want",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "width",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 800,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "height",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 600,
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The PNG image.",
+            "content": {
+              "image/png": {}
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientErrorResponse"
+                },
+                "example": "\n{\n  \"errors\": [\n    {\n      \"status\": \"404\",\n      \"title\": \"Resource not found\",\n      \"detail\": \"The requested resource could not be found.\"\n    }\n  ]\n}\n"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

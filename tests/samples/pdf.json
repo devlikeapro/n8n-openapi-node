@@ -1,0 +1,34 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Video Download API",
+    "version": "1.0.0",
+    "description": "API for downloading an example MP4 video."
+  },
+  "paths": {
+    "/storage/fed269b15c6809f599c9fce/2017/10/file-sample_150kB.pdf": {
+      "get": {
+        "summary": "Download MP3 Audio",
+        "operationId": "downloadAudio",
+        "responses": {
+          "200": {
+            "description": "Successful audio download",
+            "content": {
+              "audio/mp3": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://file-examples.com"
+    }
+  ]
+}

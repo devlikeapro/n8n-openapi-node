@@ -1,0 +1,34 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Video Download API",
+    "version": "1.0.0",
+    "description": "API for downloading an example MP4 video."
+  },
+  "paths": {
+    "/samples/video/mp4/sample_640x360.mp4": {
+      "get": {
+        "summary": "Download MP4 Video",
+        "operationId": "downloadVideo",
+        "responses": {
+          "200": {
+            "description": "Successful video download",
+            "content": {
+              "video/mp4": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://filesamples.com/"
+    }
+  ]
+}
