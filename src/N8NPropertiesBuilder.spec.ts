@@ -753,6 +753,7 @@ test('enum schema', () => {
         },
         {
             displayName: 'Type',
+            description: undefined,
             name: 'type',
             type: 'options',
             default: 'type1',
