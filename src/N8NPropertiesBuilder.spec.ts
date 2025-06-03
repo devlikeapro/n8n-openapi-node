@@ -1,11 +1,11 @@
-import {N8NPropertiesBuilder, Override} from './N8NPropertiesBuilder';
+import { N8NPropertiesBuilder, Override } from './N8NPropertiesBuilder';
 
-import {BaseOperationsCollector} from "./OperationsCollector";
-import {OpenAPIV3} from "openapi-types";
-import {OperationContext} from "./openapi/OpenAPIVisitor";
+import { BaseOperationsCollector } from "./OperationsCollector";
+import { OpenAPIV3 } from "openapi-types";
+import { OperationContext } from "./openapi/OpenAPIVisitor";
 import * as lodash from "lodash";
-import {DefaultOperationParser} from "./OperationParser";
-import {DefaultResourceParser} from "./ResourceParser";
+import { DefaultOperationParser } from "./OperationParser";
+import { DefaultResourceParser } from "./ResourceParser";
 
 export class CustomOperationParser extends DefaultOperationParser {
     name(operation: OpenAPIV3.OperationObject, context: OperationContext): string {
@@ -58,7 +58,7 @@ test('query param - schema', () => {
         },
     };
 
-    const parser = new N8NPropertiesBuilder({paths}, {
+    const parser = new N8NPropertiesBuilder({ paths }, {
         operation: new CustomOperationParser(),
         resource: new CustomResourceParser(),
     });
@@ -207,7 +207,7 @@ test('query param - content', () => {
         },
     };
 
-    const parser = new N8NPropertiesBuilder({paths, components}, {
+    const parser = new N8NPropertiesBuilder({ paths, components }, {
         operation: new CustomOperationParser(),
         resource: new CustomResourceParser(),
     });
@@ -326,7 +326,7 @@ test('query param - dot in field name', () => {
         },
     };
 
-    const parser = new N8NPropertiesBuilder({paths}, {
+    const parser = new N8NPropertiesBuilder({ paths }, {
         operation: new CustomOperationParser(),
         resource: new CustomResourceParser(),
     });
@@ -436,7 +436,7 @@ test('path param', () => {
         },
     };
 
-    const parser = new N8NPropertiesBuilder({paths}, {
+    const parser = new N8NPropertiesBuilder({ paths }, {
         OperationsCollector: BaseOperationsCollector,
         operation: new CustomOperationParser(),
         resource: new CustomResourceParser(),
@@ -555,7 +555,7 @@ test('request body', () => {
         },
     };
 
-    const parser = new N8NPropertiesBuilder({paths, components}, {
+    const parser = new N8NPropertiesBuilder({ paths, components }, {
         OperationsCollector: BaseOperationsCollector,
         operation: new CustomOperationParser(),
         resource: new CustomResourceParser(),
@@ -659,7 +659,7 @@ test('request body', () => {
                     operation: ['Create'],
                 },
             },
-            default: JSON.stringify({foo: 'bar'}, null, 2),
+            default: JSON.stringify({ foo: 'bar' }, null, 2),
             required: undefined,
             routing: {
                 "send": {
@@ -701,7 +701,7 @@ test('enum schema', () => {
     };
 
     // @ts-ignore
-    const parser = new N8NPropertiesBuilder({paths}, {
+    const parser = new N8NPropertiesBuilder({ paths }, {
         OperationsCollector: BaseOperationsCollector,
         operation: new CustomOperationParser(),
         resource: new CustomResourceParser(),
@@ -786,29 +786,29 @@ test('enum schema', () => {
 });
 
 test('body "array" param', () => {
-        const paths = {
-            '/api/entities': {
-                post: {
-                    operationId: 'EntityController_create',
-                    summary: 'Create entity',
-                    requestBody: {
-                        content: {
-                            'application/json': {
-                                schema: {
-                                    type: 'array',
-                                    items: {
-                                        type: 'string',
-                                    },
+    const paths = {
+        '/api/entities': {
+            post: {
+                operationId: 'EntityController_create',
+                summary: 'Create entity',
+                requestBody: {
+                    content: {
+                        'application/json': {
+                            schema: {
+                                type: 'array',
+                                items: {
+                                    type: 'string',
                                 },
                             },
                         },
                     },
-                    tags: ['🖥️ Entity'],
                 },
+                tags: ['🖥️ Entity'],
             },
-        };
+        },
+    };
 
-    const parser = new N8NPropertiesBuilder({paths}, {
+    const parser = new N8NPropertiesBuilder({ paths }, {
         OperationsCollector: BaseOperationsCollector,
         operation: new CustomOperationParser(),
         resource: new CustomResourceParser(),
@@ -880,8 +880,8 @@ test('body "array" param', () => {
             "type": "string"
         }
     ]
-        expect(result).toEqual(expected)
-    }
+    expect(result).toEqual(expected)
+}
 )
 
 test('test overrides', () => {
@@ -955,7 +955,7 @@ test('test overrides', () => {
         },
     ];
 
-    const parser = new N8NPropertiesBuilder({paths, components}, {
+    const parser = new N8NPropertiesBuilder({ paths, components }, {
         OperationsCollector: BaseOperationsCollector,
         operation: new CustomOperationParser(),
         resource: new CustomResourceParser(),
@@ -1099,7 +1099,7 @@ test('multiple tags', () => {
         },
     };
 
-    const parser = new N8NPropertiesBuilder({paths}, {
+    const parser = new N8NPropertiesBuilder({ paths }, {
         operation: new CustomOperationParser(),
         resource: new CustomResourceParser(),
     })
@@ -1297,7 +1297,7 @@ test('no tags - default tag', () => {
         },
     };
 
-    const parser = new N8NPropertiesBuilder({paths}, {
+    const parser = new N8NPropertiesBuilder({ paths }, {
         operation: new CustomOperationParser(),
         resource: new CustomResourceParser(),
     });
@@ -1393,4 +1393,110 @@ test('no tags - default tag', () => {
             }
         ]
     );
+});
+
+test('array query parameters', () => {
+    const paths = {
+        '/api/locations': {
+            get: {
+                operationId: 'getLocations',
+                summary: 'Get locations within area',
+                parameters: [
+                    {
+                        name: 'sw_corner[]',
+                        in: 'query',
+                        required: true,
+                        description: 'Southwest corner coordinates [latitude, longitude]',
+                        schema: {
+                            type: 'array',
+                            items: {
+                                type: 'number'
+                            },
+                            minItems: 2,
+                            maxItems: 2
+                        },
+                        style: 'form',
+                        explode: true,
+                        example: [53.500403, -2.276471]
+                    },
+                    {
+                        name: 'ne_corner[]',
+                        in: 'query',
+                        required: true,
+                        description: 'Northeast corner coordinates [latitude, longitude]',
+                        schema: {
+                            type: 'array',
+                            items: {
+                                type: 'number'
+                            },
+                            minItems: 2,
+                            maxItems: 2
+                        },
+                        style: 'form',
+                        explode: true,
+                        example: [53.521749, -2.259879]
+                    },
+                    {
+                        name: 'tags',
+                        in: 'query',
+                        required: false,
+                        description: 'Filter by tags',
+                        schema: {
+                            type: 'array',
+                            items: {
+                                type: 'string'
+                            }
+                        },
+                        style: 'form',
+                        explode: false
+                    },
+                    {
+                        name: 'limit',
+                        in: 'query',
+                        schema: {
+                            type: 'integer',
+                            minimum: 1,
+                            maximum: 100,
+                            default: 50
+                        },
+                        description: 'Maximum number of locations to return'
+                    }
+                ],
+                tags: ['Locations'],
+            },
+        },
+    };
+
+    const parser = new N8NPropertiesBuilder({ paths }, {
+        OperationsCollector: BaseOperationsCollector,
+        operation: new CustomOperationParser(),
+        resource: new CustomResourceParser(),
+    });
+    const result = parser.build();
+
+    // Find the sw_corner parameter
+    const swCornerField = result.find(field => field.name === 'sw_corner%5B%5D'); // URL encoded sw_corner[]
+    expect(swCornerField).toBeDefined();
+    expect(swCornerField?.type).toBe('fixedCollection');
+    expect(swCornerField?.typeOptions?.multipleValues).toBe(true);
+    expect(swCornerField?.required).toBe(true);
+    expect(swCornerField?.routing?.send?.type).toBe('query');
+    expect(swCornerField?.routing?.send?.property).toBe('sw_corner[]');
+
+    // Find the ne_corner parameter
+    const neCornerField = result.find(field => field.name === 'ne_corner%5B%5D');
+    expect(neCornerField).toBeDefined();
+    expect(neCornerField?.type).toBe('fixedCollection');
+
+    // Find the tags parameter (comma-separated)
+    const tagsField = result.find(field => field.name === 'tags');
+    expect(tagsField).toBeDefined();
+    expect(tagsField?.type).toBe('fixedCollection');
+    expect(tagsField?.routing?.send?.value).toContain('join(",")');
+
+    // Find the regular limit parameter
+    const limitField = result.find(field => field.name === 'limit');
+    expect(limitField).toBeDefined();
+    expect(limitField?.type).toBe('number');
+    expect(limitField?.routing?.send?.value).toBe('={{ $value }}');
 });

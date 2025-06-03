@@ -1,5 +1,5 @@
-import {N8NPropertiesBuilder} from "../src/N8NPropertiesBuilder";
-import {INodeProperties} from "n8n-workflow";
+import { N8NPropertiesBuilder } from "../src/N8NPropertiesBuilder";
+import { INodeProperties } from "n8n-workflow";
 
 test('petstore.json', () => {
     const doc = require('./samples/petstore.json');
@@ -746,7 +746,13 @@ test('petstore.json', () => {
             }
         },
         {
-            "default": "[\n  null\n]",
+            "default": {
+                "items": [
+                    {
+                        "value": undefined,
+                    },
+                ],
+            },
             "description": "Tags to filter by",
             "displayName": "Tags",
             "displayOptions": {
@@ -760,15 +766,33 @@ test('petstore.json', () => {
                 }
             },
             "name": "tags",
+            "options": [
+                {
+                    "displayName": "Items",
+                    "name": "items",
+                    "values": [
+                        {
+                            "default": "",
+                            "description": "Item value (string)",
+                            "displayName": "Value",
+                            "name": "value",
+                            "type": "string",
+                        },
+                    ],
+                },
+            ],
             "routing": {
                 "send": {
                     "property": "tags",
                     "propertyInDotNotation": false,
                     "type": "query",
-                    "value": "={{ $value }}"
+                    "value": "={{ $value.items ? $value.items.map(item => item.value) : [] }}"
                 }
             },
-            "type": "json"
+            "type": "fixedCollection",
+            "typeOptions": {
+                "multipleValues": true,
+            },
         },
         {
             "default": "",
@@ -915,7 +939,6 @@ test('petstore.json', () => {
         },
         {
             "default": "",
-            "description": "",
             "displayName": "Api Key",
             "displayOptions": {
                 "show": {

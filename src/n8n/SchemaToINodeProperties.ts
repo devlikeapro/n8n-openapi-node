@@ -1,8 +1,8 @@
-import {OpenAPIV3} from "openapi-types";
-import {INodeProperties, NodePropertyTypes} from "n8n-workflow";
-import {RefResolver} from "../openapi/RefResolver";
+import { OpenAPIV3 } from "openapi-types";
+import { INodeProperties, NodePropertyTypes } from "n8n-workflow";
+import { RefResolver } from "../openapi/RefResolver";
 import * as lodash from "lodash";
-import {SchemaExample} from "../openapi/SchemaExample";
+import { SchemaExample } from "../openapi/SchemaExample";
 
 type Schema = OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject;
 type FromSchemaNodeProperty = Pick<INodeProperties, 'type' | 'default' | 'description' | 'options'>;
@@ -13,6 +13,12 @@ function combine(...sources: Partial<INodeProperties>[]): INodeProperties {
         // n8n does want to have required: false|null|undefined
         delete obj.required
     }
+    // Remove undefined values to prevent them from appearing in output
+    Object.keys(obj).forEach(key => {
+        if (obj[key] === undefined) {
+            delete obj[key];
+        }
+    });
     return obj
 }
 
@@ -100,27 +106,41 @@ export class N8NINodeProperties {
         if (!fieldSchemaKeys) {
             throw new Error(`Parameter schema nor content not found`)
         }
+
+        // Handle array query parameters specially
+        const schema = this.refResolver.resolve<OpenAPIV3.SchemaObject>(parameter.schema || (parameter.content && findKey(parameter.content, /application\/json.*/)?.schema));
+        const isArrayQueryParam = parameter.in === 'query' && schema && schema.type === 'array';
+
+        if (isArrayQueryParam) {
+            fieldSchemaKeys = this.fromArrayQueryParameter(schema, parameter);
+        }
+
         const fieldParameterKeys: Partial<INodeProperties> = {
             displayName: lodash.startCase(parameter.name),
             name: encodeURIComponent(parameter.name.replace(/\./g, "-")),
             required: parameter.required,
-            description: parameter.description,
-            default: parameter.example,
+            ...(parameter.description && { description: parameter.description }),
+            ...(parameter.example !== undefined && { default: parameter.example }),
         };
         const field = combine(fieldParameterKeys, fieldSchemaKeys)
 
         switch (parameter.in) {
             case "query":
-                field.routing = {
-                    send: {
-                        type: 'query',
-                        property: parameter.name,
-                        value: '={{ $value }}',
-                        propertyInDotNotation: false,
-                    },
-                };
+                if (isArrayQueryParam) {
+                    // Array query parameters need special routing
+                    field.routing = this.getArrayQueryRouting(parameter, schema);
+                } else {
+                    field.routing = {
+                        send: {
+                            type: 'query',
+                            property: parameter.name,
+                            value: '={{ $value }}',
+                            propertyInDotNotation: false,
+                        },
+                    };
+                }
                 break;
-            case "path" :
+            case "path":
                 field.required = true
                 break
             case "header":
@@ -139,6 +159,121 @@ export class N8NINodeProperties {
             delete field.required
         }
         return field
+    }
+
+    private fromArrayQueryParameter(schema: OpenAPIV3.SchemaObject, parameter: OpenAPIV3.ParameterObject): Partial<INodeProperties> {
+        // Type guard to ensure this is an array schema
+        if (schema.type !== 'array' || !schema.items) {
+            throw new Error('fromArrayQueryParameter called with non-array schema');
+        }
+
+        const itemsSchema = this.refResolver.resolve<OpenAPIV3.SchemaObject>(schema.items);
+        let defaultValue = this.schemaExample.extractExample(schema);
+
+        // For array query parameters, we typically want a fixedCollection type
+        // that allows users to add multiple items
+        const field: Partial<INodeProperties> = {
+            type: 'fixedCollection',
+            default: {},
+            description: schema.description || parameter.description,
+            typeOptions: {
+                multipleValues: true,
+            },
+            options: [
+                {
+                    name: 'items',
+                    displayName: 'Items',
+                    values: [
+                        {
+                            displayName: 'Value',
+                            name: 'value',
+                            type: this.getArrayItemType(itemsSchema),
+                            default: this.getArrayItemDefault(itemsSchema),
+                            description: itemsSchema.description || `Item value (${itemsSchema.type || 'any'})`,
+                        }
+                    ]
+                }
+            ]
+        };
+
+        // If we have a specific example, use it for the default
+        if (defaultValue !== undefined && Array.isArray(defaultValue) && defaultValue.length > 0) {
+            field.default = {
+                items: defaultValue.map(val => ({ value: val }))
+            };
+        }
+
+        return field;
+    }
+
+    private getArrayItemType(itemsSchema: OpenAPIV3.SchemaObject): NodePropertyTypes {
+        switch (itemsSchema.type) {
+            case 'boolean':
+                return 'boolean';
+            case 'number':
+            case 'integer':
+                return 'number';
+            case 'string':
+            default:
+                return 'string';
+        }
+    }
+
+    private getArrayItemDefault(itemsSchema: OpenAPIV3.SchemaObject): any {
+        const defaultValue = this.schemaExample.extractExample(itemsSchema);
+        if (defaultValue !== undefined) {
+            return defaultValue;
+        }
+
+        switch (itemsSchema.type) {
+            case 'boolean':
+                return false;
+            case 'number':
+            case 'integer':
+                return 0;
+            case 'string':
+            default:
+                return '';
+        }
+    }
+
+    private getArrayQueryRouting(parameter: OpenAPIV3.ParameterObject, schema: OpenAPIV3.SchemaObject): any {
+        // Handle different array serialization styles
+        const style = parameter.style || 'form';
+        const explode = parameter.explode !== false; // Default is true for form style
+
+        if (style === 'form' && explode) {
+            // For form+explode style (most common for array query params)
+            // This handles cases like ?tags=tag1&tags=tag2 or ?sw_corner[]=1&sw_corner[]=2
+            return {
+                send: {
+                    type: 'query',
+                    property: parameter.name,
+                    value: '={{ $value.items ? $value.items.map(item => item.value) : [] }}',
+                    propertyInDotNotation: false,
+                },
+            };
+        } else if (style === 'form' && !explode) {
+            // For form+no-explode style: ?tags=tag1,tag2
+            return {
+                send: {
+                    type: 'query',
+                    property: parameter.name,
+                    value: '={{ $value.items ? $value.items.map(item => item.value).join(",") : "" }}',
+                    propertyInDotNotation: false,
+                },
+            };
+        } else {
+            // Default fallback to form+explode behavior
+            return {
+                send: {
+                    type: 'query',
+                    property: parameter.name,
+                    value: '={{ $value.items ? $value.items.map(item => item.value) : [] }}',
+                    propertyInDotNotation: false,
+                },
+            };
+        }
     }
 
     fromParameters(parameters: (OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject)[] | undefined): INodeProperties[] {
