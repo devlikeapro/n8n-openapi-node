@@ -146,7 +146,13 @@ test('query param - schema', () => {
     ]);
 });
 
-test('query param - content', () => {
+const contentTypes = [
+    ['application/json'],
+    ['application/openapi+json'],
+    ['application/vnd.api+json'],
+];
+
+test.each(contentTypes)('query param - content', (contentType) => {
     const paths = {
         '/api/entities': {
             get: {
@@ -160,7 +166,7 @@ test('query param - content', () => {
                         example: false,
                         description: 'Filter description',
                         content: {
-                            'application/json': {
+                            [contentType]: {
                                 schema: {
                                     $ref: '#/components/schemas/Entity',
                                 },
@@ -501,7 +507,7 @@ test('path param', () => {
     ]);
 });
 
-test('request body', () => {
+test.each(contentTypes)('request body', (contentType) => {
     const paths = {
         '/api/entities': {
             post: {
@@ -509,7 +515,7 @@ test('request body', () => {
                 summary: 'Create entity',
                 requestBody: {
                     content: {
-                        'application/json': {
+                        [contentType]: {
                             schema: {
                                 $ref: '#/components/schemas/Entity',
                             },

@@ -93,7 +93,7 @@ export class N8NINodeProperties {
             fieldSchemaKeys = this.fromSchema(parameter.schema!!);
         }
         if (!fieldSchemaKeys) {
-            const regexp = /application\/json.*/
+            const regexp = /application\/(?:.*\+)?json.*/
             const content = findKey(parameter.content, regexp)
             fieldSchemaKeys = this.fromSchema(content.schema);
         }
@@ -168,7 +168,7 @@ export class N8NINodeProperties {
             return [];
         }
         body = this.refResolver.resolve<OpenAPIV3.RequestBodyObject>(body)
-        const regexp = /application\/json.*/
+        const regexp = /application\/(?:.*\+)?json.*/
         const content = findKey(body.content, regexp)
         if (!content) {
             throw new Error(`No '${regexp}' content found`);
